@@ -1,9 +1,19 @@
 {
-  "name": "adnat-react",
+  "name": "adnat-backend",
   "version": "1.0.0",
   "license": "MIT",
+  "dependencies": {
+    "bcrypt": "^3.0.4",
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "nodemon": "^1.18.10",
+    "sqlite3": "^4.0.6",
+    "uuid": "^3.3.2"
+  },
   "scripts": {
-    "backend:start": "cd backend && node index.js",
-    "backend:setup": "cd backend && yarn install"
+    "start": "node index.js"
+  },
+  "devDependencies": {
+    "prettier": "1.16.4"
   }
 }

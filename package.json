@@ -1,0 +1,13 @@
+{
+  "name": "adnat-react",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {
+    "build:client": "cd client && yarn install",
+    "build:server": "cd server && yarn install",
+    "build": "npm run build:client && npm run build:server",
+    "start:backend": "cd server && node index.js",
+    "start:frontend": "cd client && node index.js",
+    "dev": "cd client && nodemon index.js"
+  }
+}
