@@ -7,7 +7,7 @@
     "build:server": "cd server && yarn install",
     "build": "npm run build:client && npm run build:server",
     "start:backend": "cd server && node index.js",
-    "start:frontend": "cd client && node index.js",
+    "start:frontend": "cd client && PORT=3001 yarn start",
     "dev": "cd client && nodemon index.js"
   }
 }
