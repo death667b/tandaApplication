@@ -31,17 +31,16 @@ export default class Login extends Component {
       password: this.state.password
     };
 
-    // axios.post('http://localhost:3000/auth/login', user)
-    //   .then(res => {
-    //     console.log(res);
-    //     console.log(res.data);
-    //   })
-
     try {
       await axios.post(`http://localhost:3000/auth/login`, user)
         .then(res => {
-          console.log(res.data);
-          alert("Logged in");
+          const data = {
+            userHasAuthenticated: true,
+            sessionId: res.data.sessionId
+          }
+
+          this.props.userHasAuthenticated(data);
+          this.props.history.push("/");
         })
     } catch (e) {
       alert(e.message);
