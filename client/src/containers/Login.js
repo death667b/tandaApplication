@@ -43,7 +43,7 @@ export default class Login extends Component {
           this.props.history.push("/");
         })
     } catch (e) {
-      alert(e.message);
+      alert(e.response.data.error);
     }
   }
 
