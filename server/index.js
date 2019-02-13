@@ -18,7 +18,14 @@ app.use(function(req, res, next) {
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, UPDATE, PUT, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  next();
+  
+  // intercept OPTIONS method
+  if ('OPTIONS' == req.method) {
+    res.sendStatus(200);
+  }
+  else {
+    next();
+  }  
 });
 app.use("/auth", authRouter);
 app.use("/organisations", organisationsRouter);
