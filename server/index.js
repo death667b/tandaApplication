@@ -6,6 +6,12 @@ const shiftsRouter = require("./router/shifts");
 const usersRouter = require("./router/users");
 const app = express();
 
+app.use(function (req, res, next) {
+  console.log('Request Type:', req.method)
+  console.log('req:', req.headers)
+  console.log('End Type', req.method, '\n\n')
+  next()
+})
 app.use(bodyParser.json());
 app.use(function(req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', '*');
