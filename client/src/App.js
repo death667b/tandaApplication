@@ -16,8 +16,24 @@ class App extends Component {
     };
   }
 
+  componentDidMount() {
+    const sessionId = localStorage.getItem('sessionId');
+
+    if (this.state.sessionId === null && sessionId !== 'null') {
+      const data = {
+        userHasAuthenticated: true,
+        sessionId: sessionId
+      }
+
+      console.log(data)
+      this.userHasAuthenticated(data)
+    }
+  }
+
   userHasAuthenticated = (data) => {
     console.log(data);
+
+    localStorage.setItem('sessionId', data.sessionId);
 
     this.setState({ 
       isAuthenticated: data.userHasAuthenticated,
