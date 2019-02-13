@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+
 import "./Home.css";
 
 export default class Home extends Component {
@@ -13,14 +14,16 @@ export default class Home extends Component {
 
   renderMainPage() {
     return (
-      <div className="main">
-        <h1>main page</h1>
-        <p>A simple roster app</p>
+      <div className="Main">
+        <h1>Welcome {this.props.name}</h1>
+        <p className="small">Your user number {this.props.userId} and your email address is {this.props.email}</p>
+        
       </div>
     );
   }
 
   render() {
+    console.log(this.props)
     return (
       <div className="Home">
         {this.props.isAuthenticated === false

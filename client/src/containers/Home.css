@@ -11,3 +11,17 @@
 .Home .lander p {
   color: #999;
 }
+
+.Home .Main {
+  padding: 80px 0;
+  text-align: center;
+}
+
+.Home .Main h1 {
+  font-family: "Open Sans", sans-serif;
+  font-weight: 600;
+}
+
+.Home .Main p {
+  color: #999;
+}
