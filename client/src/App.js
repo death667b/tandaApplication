@@ -64,7 +64,7 @@ class App extends Component {
               userId: res.data.id,
               name: res.data.name,
               email: res.data.email,
-              organisationId: data.organisationId
+              organisationId: res.data.organisationId
             });
         }).catch(e => {
           console.log('Axios userHasAuthenticated error: ', e.response.data.error);
@@ -97,8 +97,6 @@ class App extends Component {
     try {
       await axios.delete(`http://localhost:3000/auth/logout`, {headers, data})
         .then(res => {
-          console.log('res', res);
-
           this.userHasAuthenticated(data);
           this.props.history.push("/login");
         })
@@ -202,6 +200,87 @@ class App extends Component {
     }
   }
 
+ renderModal = () => {
+  return (
+    <Modal show={this.state.show} onHide={this.handleModalClose}>
+      <Modal.Header closeButton>
+        <Modal.Title>Editing Details for {this.state.name}</Modal.Title>
+      </Modal.Header>
+
+      <Modal.Body>
+        <form onSubmit={this.handleModalRenameSubmit}>
+          <FormGroup controlId="newName" bsSize="large">
+            <ControlLabel>Name</ControlLabel>
+            <FormControl
+              autoFocus
+              type="name"
+              value={this.state.newName || this.state.name}
+              onChange={this.handleChange}
+            />
+          </FormGroup>
+          <FormGroup controlId="newEmail" bsSize="large">
+            <ControlLabel>Email</ControlLabel>
+            <FormControl
+              autoFocus
+              type="email"
+              value={this.state.newEmail || this.state.email}
+              onChange={this.handleChange}
+            />
+          </FormGroup>
+          <Button
+            block
+            bsSize="large"
+            disabled={!this.validateModalRenameForm()}
+            type="submit"
+          >
+            Save new details
+          </Button>
+        </form>
+        <form onSubmit={this.handleModalPasswordSubmit}>
+          <FormGroup controlId="oldPassword" bsSize="large">
+            <ControlLabel>Old Password</ControlLabel>
+            <FormControl
+              value={this.state.oldPassword}
+              onChange={this.handleChange}
+              type="password"
+            />
+          </FormGroup>
+          <FormGroup controlId="newPassword" bsSize="large">
+            <ControlLabel>New Password</ControlLabel>
+            <FormControl
+              value={this.state.newPassword}
+              onChange={this.handleChange}
+              type="password"
+            />
+          </FormGroup>
+          <FormGroup controlId="newConfirmPassword" bsSize="large">
+            <ControlLabel>Confirm New Password</ControlLabel>
+            <FormControl
+              value={this.state.newConfirmPassword}
+              onChange={this.handleChange}
+              type="password"
+            />
+          </FormGroup>
+          <Button
+            block
+            bsSize="large"
+            disabled={!this.validateModelPasswordForm()}
+            type="submit"
+          >
+            Save new password
+          </Button>
+        </form>
+      </Modal.Body>
+
+      <Modal.Footer>
+        <Button variant="secondary" onClick={this.handleModalCancel}>
+          Cancel
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  )
+ }
+
 render() {
   const childProps = {
     isAuthenticated: this.state.isAuthenticated,
@@ -244,85 +323,7 @@ render() {
       
       <Routes childProps={childProps} />
 
-
-      <Modal show={this.state.show} onHide={this.handleModalClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Editing Details for {this.state.name}</Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body>
-          <form onSubmit={this.handleModalRenameSubmit}>
-            <FormGroup controlId="newName" bsSize="large">
-              <ControlLabel>Name</ControlLabel>
-              <FormControl
-                autoFocus
-                type="name"
-                value={this.state.newName || this.state.name}
-                onChange={this.handleChange}
-              />
-            </FormGroup>
-            <FormGroup controlId="newEmail" bsSize="large">
-              <ControlLabel>Email</ControlLabel>
-              <FormControl
-                autoFocus
-                type="email"
-                value={this.state.newEmail || this.state.email}
-                onChange={this.handleChange}
-              />
-            </FormGroup>
-            <Button
-              block
-              bsSize="large"
-              disabled={!this.validateModalRenameForm()}
-              type="submit"
-            >
-              Save new details
-            </Button>
-          </form>
-          <form onSubmit={this.handleModalPasswordSubmit}>
-            <FormGroup controlId="oldPassword" bsSize="large">
-              <ControlLabel>Old Password</ControlLabel>
-              <FormControl
-                value={this.state.oldPassword}
-                onChange={this.handleChange}
-                type="password"
-              />
-            </FormGroup>
-            <FormGroup controlId="newPassword" bsSize="large">
-              <ControlLabel>New Password</ControlLabel>
-              <FormControl
-                value={this.state.newPassword}
-                onChange={this.handleChange}
-                type="password"
-              />
-            </FormGroup>
-            <FormGroup controlId="newConfirmPassword" bsSize="large">
-              <ControlLabel>Confirm New Password</ControlLabel>
-              <FormControl
-                value={this.state.newConfirmPassword}
-                onChange={this.handleChange}
-                type="password"
-              />
-            </FormGroup>
-            <Button
-              block
-              bsSize="large"
-              disabled={!this.validateModelPasswordForm()}
-              type="submit"
-            >
-              Save new password
-            </Button>
-          </form>
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button variant="secondary" onClick={this.handleModalCancel}>
-            Cancel
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-
+      {this.renderModal()}
     </div>
   );
 }
