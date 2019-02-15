@@ -19,6 +19,7 @@ class App extends Component {
 
     this.state = {
       isAuthenticated: autoAuthticate,
+      organisations: [],
       sessionId: sessionId,
       show: false,
       newEmail: "",
@@ -35,7 +36,24 @@ class App extends Component {
         userHasAuthenticated: this.state.isAuthenticated,
         sessionId: this.state.sessionId
       }
-      this.userHasAuthenticated(data);
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': this.state.sessionId
+      }
+
+      try {
+        axios.get(`http://localhost:3000/organisations`, {headers})
+          .then(res => {
+            this.setState({ 
+              organisations: res.data
+            });
+
+            this.userHasAuthenticated(data);
+          })
+      } catch (e) {
+        alert(e.response.data.error);
+      }
     }
   }
 
@@ -43,6 +61,25 @@ class App extends Component {
     this.setState({
       [event.target.id]: event.target.value
     });
+  }
+
+  userHasChangedOrganisation = orgId => {
+    this.setState({
+      organisationId: orgId
+    });
+  }
+
+  updateOrganisationAndUserId = (orgId, newOrgArray) => {
+    this.setState({
+      organisationId: orgId,
+      organisations: newOrgArray
+    });
+  }
+
+  upateOrganisations = newOrgArray => {
+    this.setState({
+      organisations: newOrgArray
+    })
   }
 
   userHasAuthenticated = (data) => {
@@ -67,6 +104,7 @@ class App extends Component {
               organisationId: res.data.organisationId
             });
         }).catch(e => {
+          localStorage.removeItem('sessionId');
           console.log('Axios userHasAuthenticated error: ', e.response.data.error);
         })
       } catch(e) {
@@ -145,8 +183,6 @@ class App extends Component {
       name: this.state.newName || this.state.name,
       email: this.state.newEmail || this.state.email
     };
-
-    console.log(updateUser);
 
     const headers = {
       'Content-Type': 'application/json',
@@ -229,6 +265,7 @@ class App extends Component {
           </FormGroup>
           <Button
             block
+            bsStyle="success"
             bsSize="large"
             disabled={!this.validateModalRenameForm()}
             type="submit"
@@ -263,6 +300,7 @@ class App extends Component {
           </FormGroup>
           <Button
             block
+            bsStyle="success"
             bsSize="large"
             disabled={!this.validateModelPasswordForm()}
             type="submit"
@@ -273,7 +311,7 @@ class App extends Component {
       </Modal.Body>
 
       <Modal.Footer>
-        <Button variant="secondary" onClick={this.handleModalCancel}>
+        <Button bsStyle="danger" onClick={this.handleModalCancel}>
           Cancel
         </Button>
       </Modal.Footer>
@@ -286,10 +324,14 @@ render() {
     isAuthenticated: this.state.isAuthenticated,
     sessionId: this.state.sessionId,
     userHasAuthenticated: this.userHasAuthenticated,
+    userHasChangedOrganisation: this.userHasChangedOrganisation,
+    upateOrganisations: this.upateOrganisations,
+    updateOrganisationAndUserId: this.updateOrganisationAndUserId,
     userId: this.state.userId,
     name: this.state.name,
     email: this.state.email,
-    organisationId: this.state.organisationId
+    organisationId: this.state.organisationId,
+    organisations: this.state.organisations
   };
 
   return (

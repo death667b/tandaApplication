@@ -10,8 +10,9 @@ export default class Home extends Component {
     super(props);
 
     this.state = {
-      organisations: [],
       showEditModal: false,
+      showCreateJoinModal: false,
+      showLeaveModal: false,
       newName: '',
       newHourlyRate: '',
       orgId: '',
@@ -19,23 +20,28 @@ export default class Home extends Component {
     };
   }
 
-  componentWillMount() {
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': this.props.sessionId
-    }
+  // componentDidMount() {
 
-    try {
-      axios.get(`http://localhost:3000/organisations`, {headers})
-        .then(res => {
-          this.setState({ 
-            organisations: res.data
-          });
-        })
-    } catch (e) {
-      alert(e.response.data.error);
-    }
-  }
+  //   // if(this.props.sessionId || this.props.isAuthenticated) {
+  //   //   console.log('being run')
+  //   //   const headers = {
+  //   //     'Content-Type': 'application/json',
+  //   //     'Authorization': this.props.sessionId
+  //   //   }
+
+  //   //   try {
+  //   //     axios.get(`http://localhost:3000/organisations`, {headers})
+  //   //       .then(res => {
+  //   //         this.setState({ 
+  //   //           organisations: res.data
+  //   //         });
+  //   //       })
+  //   //   } catch (e) {
+  //   //     alert(e.response.data.error);
+  //   //   }
+  //   // }
+
+  // }
 
   renderWelcomePage() {
     return (
@@ -49,7 +55,17 @@ export default class Home extends Component {
   renderNoUserOrganisations() {
     return (
       <div>
-        <p>You are currently not apart of any Organisations.<br />Please join or create one.</p>
+        <h3>Organisations</h3>
+        <p>
+          You are currently not apart of any Organisations. Please join or create one.<br />
+          <Button 
+            bsStyle="primary" 
+            className='joinCreateButton' 
+            onClick={this.handleCreateJoinModalShow}
+          >
+            Create and Join new Organisation
+          </Button>
+        </p>
         {this.renderListOrganisations()}
       </div>
 
@@ -57,8 +73,34 @@ export default class Home extends Component {
   }
 
   renderUsersOrganisations() {
+    const userOrganisation = this.props.organisations[this.props.organisationId-1];
+
     return (
-      <p>Details of your Organisation</p>
+      <div>
+        <h3>My Organisation</h3>
+        {this.props.organisations.length < 1
+          ? (
+            <p>Loading Organisations...</p>
+          )
+          : (
+            <div>
+              <p>Name: {userOrganisation.name}</p>
+              <p>
+                Hourly Rate: {this.currencyFormatted(userOrganisation.hourlyRate)}<br />
+                <Button 
+                  bsStyle="danger" 
+                  className='leaveButton' 
+                  onClick={this.handleLeaveModalShow}
+                >
+                  Leave Organisation
+                </Button>
+              </p>
+            </div>
+          )}
+
+
+        <h3>Shifts</h3>
+      </div>
     )
   }
 
@@ -84,32 +126,68 @@ export default class Home extends Component {
   }
 
   buttonFormatter = (cell, row) => {
-    const curriedHandleEditModalShow = () => {
-      this.handleEditModalShow(row);
-    }
+    const curriedHandleEditModalShow = () => this.handleEditModalShow(row);
+    const curriedHandleJoinSubmit = () => this.HandleJoinSubmit(row.id);
+
     return (
     <ButtonToolbar className='orgButtonToolbar'>        
       <Button className='orgButton' onClick={curriedHandleEditModalShow}>Edit</Button>
-      <Button className='orgButton'>Join</Button>
+      <Button className='orgButton' onClick={curriedHandleJoinSubmit}>Join</Button>
     </ButtonToolbar>
     );
   }
 
-  handleEditModalClose = () => {
+  HandleJoinSubmit = orgId => {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': this.props.sessionId
+    }
+
+    const data = {
+        "organisationId": orgId
+      }
+
+    try {
+      axios.post(`http://localhost:3000/organisations/join`, data, {headers})
+        .then(res => {
+          this.props.userHasChangedOrganisation(orgId);
+        })
+    } catch (e) {
+      alert(e.response.data.error);
+    }
+  }
+
+  handleModalClose = () => {
     this.setState({ 
       showEditModal: false,
+      showCreateJoinModal: false,
+      showLeaveModal: false,
       newName: '',
       newHourlyRate: '',
     });
   }
 
-  handleEditModalShow = (row) => {
+  handleEditModalShow = row => {
     this.setState({ 
       showEditModal: true,
       orgId: row.id,
       orgName: row.name,
       newName: row.name,
       newHourlyRate: row.hourlyRate
+    });
+  }
+
+  handleCreateJoinModalShow = () => {
+    this.setState({ 
+      showCreateJoinModal: true,
+      newName: '',
+      newHourlyRate: ''
+    });
+  }
+
+  handleLeaveModalShow = () => {
+    this.setState({ 
+      showLeaveModal: true
     });
   }
 
@@ -124,7 +202,7 @@ export default class Home extends Component {
     return (newHourlyRate > 0) ? newHourlyRate : false;
   }
 
-  validateOrgUpdateModalForm() {
+  validateOrgModalForm() {
     return (
       this.state.newName.length > 0 &&
       this.cleanHourlyRate(this.state.newHourlyRate)
@@ -152,29 +230,95 @@ export default class Home extends Component {
         .then(res => {
           alert('Organisation successfully updated!');
 
-          const oldOrg = JSON.parse(JSON.stringify(this.state.organisations))
+          const oldOrg = JSON.parse(JSON.stringify(this.props.organisations))
           oldOrg[orgId-1] = {id: orgId, ...updateOrganisation};
 
-          this.setState({ 
-            organisations: oldOrg,
+          this.setState({
             showEditModal: false,
             newName: '',
             newHourlyRate: '',
           });
+
+          this.props.upateOrganisations(oldOrg);
         })
     } catch (e) {
       alert(e.response.data.error);
     }
   }
 
+  handleOrgCreateJoinModalSubmit = async event => {
+    event.preventDefault();
+
+    const cleanedHourlyRate = this.cleanHourlyRate(this.state.newHourlyRate);
+
+    const createOrganisation = {
+      name: this.state.newName,
+      hourlyRate: cleanedHourlyRate
+    };
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': this.props.sessionId
+    }
+
+    try {
+      await axios.post(`http://localhost:3000/organisations/create_join`, createOrganisation, {headers})
+        .then(res => {
+          alert('Organisation successfully Created and Joined!');
+
+          const oldOrg = JSON.parse(JSON.stringify(this.props.organisations))
+          oldOrg.push(res.data)
+
+          this.setState({
+            showCreateJoinModal: false,
+            newName: '',
+            newHourlyRate: '',
+          });
+
+          this.props.updateOrganisationAndUserId(res.data.id, oldOrg)
+
+          // this.props.upateOrganisations(oldOrg);
+          // this.props.userHasChangedOrganisation(res.data.id);
+        })
+    } catch (e) {
+      alert(e.response.data.error);
+    }
+  }
+
+  handleLeaveModalSubmit = async event => {
+    event.preventDefault();
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': this.props.sessionId
+    }
+
+    try {
+      await axios.post(`http://localhost:3000/organisations/leave`, {}, {headers})
+        .then(res => {
+          alert('You have successfully left your Organisation!');
+
+          this.setState({
+            showLeaveModal: false
+          });
+
+          this.props.userHasChangedOrganisation(null);
+        })
+    } catch (e) {
+      alert(e.response.data.error);
+    }
+  }
 
   renderEditOrgModal = () => {
     return (
-      <Modal show={this.state.showEditModal} onHide={this.handleEditModalClose} >
+      <Modal 
+        show={this.state.showEditModal} 
+        onHide={this.handleModalClose} 
+        aria-labelledby="EditOrgModal"
+      >
         <Modal.Header closeButton>
           <Modal.Title>Editing Details for {this.state.orgName}</Modal.Title>
         </Modal.Header>
-      {/* orgId: row.id, */}
 
         <Modal.Body>
           <form>
@@ -200,11 +344,12 @@ export default class Home extends Component {
         </Modal.Body>
 
         <Modal.Footer>
-          <Button variant="secondary" onClick={this.handleEditModalClose}>
+          <Button bsStyle="danger" onClick={this.handleModalClose}>
             Cancel
           </Button>
             <Button
-              disabled={!this.validateOrgUpdateModalForm()}
+              bsStyle="success"
+              disabled={!this.validateOrgModalForm()}
               type="submit"
               onClick={this.handleOrgUpdateModalSubmit}
             >
@@ -215,8 +360,90 @@ export default class Home extends Component {
     )
   }
 
+  renderCreateJoinOrgModal = () => {
+    return (
+      <Modal 
+        show={this.state.showCreateJoinModal} 
+        onHide={this.handleModalClose} 
+        aria-labelledby="CreateJoinOrgModal"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Create and join a new organisation</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <form>
+            <FormGroup controlId="newName" bsSize="large">
+              <ControlLabel>New Organisation Name</ControlLabel>
+              <FormControl
+                autoFocus
+                type="name"
+                value={this.state.newName}
+                onChange={this.handleChange}
+              />
+            </FormGroup>
+            <FormGroup controlId="newHourlyRate" bsSize="large">
+              <ControlLabel>New Hourly Rate</ControlLabel>
+              <FormControl
+                autoFocus
+                type="tel"
+                value={this.state.newHourlyRate}
+                onChange={this.handleChange}
+              />
+            </FormGroup>
+          </form>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button bsStyle="danger" onClick={this.handleModalClose}>
+            Cancel
+          </Button>
+            <Button
+              bsStyle="success"
+              disabled={!this.validateOrgModalForm()}
+              type="submit"
+              onClick={this.handleOrgCreateJoinModalSubmit}
+            >
+              Create and Join
+            </Button>
+        </Modal.Footer>
+      </Modal>
+    )
+  }
+
+  renderLeaveOrgModal = () => {
+    return (
+      <Modal 
+        show={this.state.showLeaveModal} 
+        onHide={this.handleModalClose} 
+        aria-labelledby="LeaveOrgModal"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Leave organisation?</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <p>Are you sure you want to leave your current organisation?</p>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button bsStyle="success" onClick={this.handleModalClose}>
+            Cancel
+          </Button>
+            <Button
+              bsStyle="danger"
+              type="submit"
+              onClick={this.handleLeaveModalSubmit}
+            >
+              Leave
+            </Button>
+        </Modal.Footer>
+      </Modal>
+    )
+  }
+
   renderListOrganisations() {
-    const organisations = this.state.organisations;
+    const organisations = this.props.organisations;
 
     return (
       <BootstrapTable data={ organisations } version='4'>
@@ -253,8 +480,7 @@ export default class Home extends Component {
           <hr />
         </div>
         <div className="organisations">
-          <h3>Organisations</h3>
-            {this.props.organisationId ? this.renderNoUserOrganisations() : this.renderUsersOrganisations()}
+          {this.props.organisationId ? this.renderUsersOrganisations() : this.renderNoUserOrganisations()}
         </div>
       </div>
     );
@@ -268,6 +494,8 @@ export default class Home extends Component {
           ? this.renderWelcomePage()
           : this.renderMainPage()}
         {this.renderEditOrgModal()}
+        {this.renderCreateJoinOrgModal()}
+        {this.renderLeaveOrgModal()}
       </div>
     );
   }

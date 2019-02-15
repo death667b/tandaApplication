@@ -31,7 +31,7 @@
   text-align: left;
 }
 
-.Home .organisations h3 {
+.Home .organisations h3 h4 {
   font-family: "Open Sans", sans-serif;
   font-weight: 600;
 }
@@ -49,4 +49,14 @@
   display: flex;
   justify-content: center;
   margin-left: -20px;
+}
+
+.Home .joinCreateButton {
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+
+.Home .leaveButton {
+  margin-top: 5px;
+  margin-bottom: 10px;
 }
