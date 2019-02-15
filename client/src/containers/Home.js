@@ -20,25 +20,6 @@ export default class Home extends Component {
     };
   }
 
-  // componentDidMount() {
-  //   if(this.props.sessionId || this.props.isAuthenticated) {
-  //     const headers = {
-  //       'Content-Type': 'application/json',
-  //       'Authorization': this.props.sessionId
-  //     }
-
-  //     try {
-  //       axios.get(`http://localhost:3000/organisations`, {headers})
-  //         .then(res => {
-  //           this.props.upateOrganisations(res.data);
-  //         })
-  //     } catch (e) {
-  //       alert(e.response.data.error);
-  //     }
-  //   }
-
-  // }
-
   renderWelcomePage() {
     return (
       <div className="lander">
@@ -98,11 +79,13 @@ export default class Home extends Component {
                   Leave Organisation
                 </Button>
               </ButtonToolbar> 
+            
+
+              {/* Display shifts section */}
+              <h3>Shifts at {userOrganisation.name}</h3>
+              {this.renderListShifts()}
             </div>
           )}
-
-
-        <h3>My Shifts</h3>
       </div>
     )
   }
@@ -446,6 +429,52 @@ export default class Home extends Component {
       </Modal>
     )
   }
+
+  renderListShifts() {
+    const shifts = this.props.shifts;
+
+    return (
+      <BootstrapTable data={ shifts } version='4'>
+        <TableHeaderColumn 
+          dataField='id' 
+          isKey 
+          // width='30' 
+          headerAlign='center'
+          dataAlign='center'
+        >Employee Name</TableHeaderColumn>
+        <TableHeaderColumn dataField='name' headerAlign='center'>Shift Date</TableHeaderColumn>
+        <TableHeaderColumn 
+          dataField='hourlyRate' 
+          headerAlign='center'
+          dataAlign='center'
+          dataFormat={ this.currencyFormatted }
+        >Start Time</TableHeaderColumn>
+        <TableHeaderColumn 
+          dataField='id' 
+          // width='220'
+          dataFormat={this.buttonFormatter}
+        >Finish Time</TableHeaderColumn>
+        <TableHeaderColumn 
+          dataField='hourlyRate' 
+          headerAlign='center'
+          dataAlign='center'
+          dataFormat={ this.currencyFormatted }
+        >Break Length(in minutes)</TableHeaderColumn>
+        <TableHeaderColumn 
+          dataField='hourlyRate' 
+          headerAlign='center'
+          dataAlign='center'
+          dataFormat={ this.currencyFormatted }
+        >Hours Worked</TableHeaderColumn>
+        <TableHeaderColumn 
+          dataField='hourlyRate' 
+          headerAlign='center'
+          dataAlign='center'
+          dataFormat={ this.currencyFormatted }
+        >Shift Cost</TableHeaderColumn>
+      </BootstrapTable>
+    )
+  } 
 
   renderListOrganisations() {
     const organisations = this.props.organisations;

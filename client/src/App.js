@@ -20,6 +20,8 @@ class App extends Component {
     this.state = {
       isAuthenticated: autoAuthticate,
       organisations: [],
+      organisationId: null,
+      shifts: [],
       sessionId: sessionId,
       show: false,
       newEmail: "",
@@ -32,17 +34,85 @@ class App extends Component {
 
   componentWillMount() {
     if(this.state.isAuthenticated && this.state.sessionId !== 'null' && this.state.sessionId !== 'undefined') {
-      const data = {
-        userHasAuthenticated: this.state.isAuthenticated,
-        sessionId: this.state.sessionId
-      }
-
-      this.getOrganisationData();
-      this.userHasAuthenticated(data);
+      this.refreshUserData(this.state.sessionId);
     }
   }
 
-  getOrganisationData = (sessId) => {
+  refreshUserData = async sessionId => {
+    try {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': sessionId
+      }
+      const orgListRespoonse = await axios.get(`http://localhost:3000/organisations`, {headers});
+      const userInfoResponse = await axios.get(`http://localhost:3000/users/me`, {headers});
+
+      const data = {
+        userHasAuthenticated: true,
+        sessionId: sessionId,
+        userId: userInfoResponse.data.id,
+        name: userInfoResponse.data.name,
+        email: userInfoResponse.data.email,
+        organisationId: userInfoResponse.data.organisationId,
+        organisations: orgListRespoonse.data
+      }
+
+      this.userHasAuthenticated(data);
+    } catch (e) {
+      alert(e.response.data.error);
+    }
+  }
+
+  getUsers = sessId => {
+    console.log('orgId: ',this.state.organisationId)
+    if (this.state.organisationId) {
+      const sessionId = sessId || this.state.sessionId;
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': sessionId
+      }
+
+      try {
+        axios.get(`http://localhost:3000/users`, {headers})
+          .then(res => {
+            console.log(res.data)
+          })
+      } catch (e) {
+        alert(e.response.data.error);
+      }
+    }
+  }
+
+  getShifts = sessId => {
+    if (this.state.organisationId) {
+      const sessionId = sessId || this.state.sessionId;
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': sessionId
+      }
+
+      try {
+        axios.get(`http://localhost:3000/shifts`, {headers})
+          .then(res => {
+            this.formatShiftRows(res.data);
+          })
+      } catch (e) {
+        alert(e.response.data.error);
+      }
+    }
+  }
+
+  formatShiftRows = rawShiftData => {
+    console.log('raw shift data:', rawShiftData)
+
+    this.setState({ 
+      shifts: rawShiftData
+    });
+  }
+
+  getOrganisationData = sessId => {
     const sessionId = sessId || this.state.sessionId;
 
     const headers = {
@@ -90,32 +160,17 @@ class App extends Component {
   userHasAuthenticated = (data) => {
     // Get all the details of the user if there is a sessionId
     if (data.userHasAuthenticated && data.sessionId !== 'null' && data.sessionId !== 'undefined') {
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': data.sessionId
-      }
+      localStorage.setItem('sessionId', data.sessionId);
 
-      try {
-        axios.get(`http://localhost:3000/users/me`, {headers})
-          .then(res => {
-            localStorage.setItem('sessionId', data.sessionId);
-
-            this.setState({ 
-              isAuthenticated: data.userHasAuthenticated,
-              sessionId: data.sessionId,
-              userId: res.data.id,
-              name: res.data.name,
-              email: res.data.email,
-              organisationId: res.data.organisationId
-            });
-        }).catch(e => {
-          localStorage.removeItem('sessionId');
-          console.log('Axios userHasAuthenticated error: ', e.response.data.error);
-        })
-      } catch(e) {
-          console.log(e)
-      }
-
+      this.setState({ 
+        isAuthenticated: data.userHasAuthenticated,
+        sessionId: data.sessionId,
+        userId: data.id,
+        name: data.name,
+        email: data.email,
+        organisationId: data.organisationId,
+        organisations: data.organisations
+      });
     } else {
       localStorage.removeItem('sessionId');
 
@@ -333,11 +388,13 @@ render() {
     upateOrganisations: this.upateOrganisations,
     updateOrganisationAndUserId: this.updateOrganisationAndUserId,
     getOrganisationData: this.getOrganisationData,
+    getShifts: this.getShifts,
     userId: this.state.userId,
     name: this.state.name,
     email: this.state.email,
     organisationId: this.state.organisationId,
-    organisations: this.state.organisations
+    organisations: this.state.organisations,
+    shifts: this.state.shifts
   };
 
   return (

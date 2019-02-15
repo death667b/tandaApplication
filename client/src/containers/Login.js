@@ -32,17 +32,26 @@ export default class Login extends Component {
     };
 
     try {
-      await axios.post(`http://localhost:3000/auth/login`, user)
-        .then(res => {
-          const data = {
-            userHasAuthenticated: true,
-            sessionId: res.data.sessionId
-          }
+      const loginResponse = await axios.post(`http://localhost:3000/auth/login`, user);
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': loginResponse.data.sessionId
+      }
+      const orgListRespoonse = await axios.get(`http://localhost:3000/organisations`, {headers});
+      const userInfoResponse = await axios.get(`http://localhost:3000/users/me`, {headers});
 
-          this.props.userHasAuthenticated(data);
-          this.props.getOrganisationData(res.data.sessionId);
-          this.props.history.push("/");
-        })
+      const data = {
+        userHasAuthenticated: true,
+        sessionId: loginResponse.data.sessionId,
+        userId: userInfoResponse.data.id,
+        name: userInfoResponse.data.name,
+        email: userInfoResponse.data.email,
+        organisationId: userInfoResponse.data.organisationId,
+        organisations: orgListRespoonse.data
+      }
+
+      this.props.userHasAuthenticated(data);
+      this.props.history.push("/");
     } catch (e) {
       alert(e.response.data.error);
     }
