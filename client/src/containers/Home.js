@@ -21,25 +21,21 @@ export default class Home extends Component {
   }
 
   // componentDidMount() {
+  //   if(this.props.sessionId || this.props.isAuthenticated) {
+  //     const headers = {
+  //       'Content-Type': 'application/json',
+  //       'Authorization': this.props.sessionId
+  //     }
 
-  //   // if(this.props.sessionId || this.props.isAuthenticated) {
-  //   //   console.log('being run')
-  //   //   const headers = {
-  //   //     'Content-Type': 'application/json',
-  //   //     'Authorization': this.props.sessionId
-  //   //   }
-
-  //   //   try {
-  //   //     axios.get(`http://localhost:3000/organisations`, {headers})
-  //   //       .then(res => {
-  //   //         this.setState({ 
-  //   //           organisations: res.data
-  //   //         });
-  //   //       })
-  //   //   } catch (e) {
-  //   //     alert(e.response.data.error);
-  //   //   }
-  //   // }
+  //     try {
+  //       axios.get(`http://localhost:3000/organisations`, {headers})
+  //         .then(res => {
+  //           this.props.upateOrganisations(res.data);
+  //         })
+  //     } catch (e) {
+  //       alert(e.response.data.error);
+  //     }
+  //   }
 
   // }
 
@@ -85,8 +81,15 @@ export default class Home extends Component {
           : (
             <div>
               <p>Name: {userOrganisation.name}</p>
-              <p>
-                Hourly Rate: {this.currencyFormatted(userOrganisation.hourlyRate)}<br />
+              <p>Hourly Rate: {this.currencyFormatted(userOrganisation.hourlyRate)}</p>
+              <ButtonToolbar> 
+                <Button 
+                  bsStyle="primary" 
+                  className='leaveButton' 
+                  onClick={this.handleEditModalShow}
+                >
+                  Edit Organisation
+                </Button>
                 <Button 
                   bsStyle="danger" 
                   className='leaveButton' 
@@ -94,12 +97,12 @@ export default class Home extends Component {
                 >
                   Leave Organisation
                 </Button>
-              </p>
+              </ButtonToolbar> 
             </div>
           )}
 
 
-        <h3>Shifts</h3>
+        <h3>My Shifts</h3>
       </div>
     )
   }
@@ -168,12 +171,14 @@ export default class Home extends Component {
   }
 
   handleEditModalShow = row => {
+    const {id, name, hourlyRate} = row;
+
     this.setState({ 
       showEditModal: true,
-      orgId: row.id,
-      orgName: row.name,
-      newName: row.name,
-      newHourlyRate: row.hourlyRate
+      orgId: id,
+      orgName: name,
+      newName: name,
+      newHourlyRate: hourlyRate
     });
   }
 

@@ -30,30 +30,35 @@ class App extends Component {
     };
   }
 
-  componentDidMount() {
+  componentWillMount() {
     if(this.state.isAuthenticated && this.state.sessionId !== 'null' && this.state.sessionId !== 'undefined') {
       const data = {
         userHasAuthenticated: this.state.isAuthenticated,
         sessionId: this.state.sessionId
       }
 
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': this.state.sessionId
-      }
+      this.getOrganisationData();
+      this.userHasAuthenticated(data);
+    }
+  }
 
-      try {
-        axios.get(`http://localhost:3000/organisations`, {headers})
-          .then(res => {
-            this.setState({ 
-              organisations: res.data
-            });
+  getOrganisationData = (sessId) => {
+    const sessionId = sessId || this.state.sessionId;
 
-            this.userHasAuthenticated(data);
-          })
-      } catch (e) {
-        alert(e.response.data.error);
-      }
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': sessionId
+    }
+
+    try {
+      axios.get(`http://localhost:3000/organisations`, {headers})
+        .then(res => {
+          this.setState({ 
+            organisations: res.data
+          });
+        })
+    } catch (e) {
+      alert(e.response.data.error);
     }
   }
 
@@ -327,6 +332,7 @@ render() {
     userHasChangedOrganisation: this.userHasChangedOrganisation,
     upateOrganisations: this.upateOrganisations,
     updateOrganisationAndUserId: this.updateOrganisationAndUserId,
+    getOrganisationData: this.getOrganisationData,
     userId: this.state.userId,
     name: this.state.name,
     email: this.state.email,

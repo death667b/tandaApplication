@@ -40,6 +40,7 @@ export default class Login extends Component {
           }
 
           this.props.userHasAuthenticated(data);
+          this.props.getOrganisationData(res.data.sessionId);
           this.props.history.push("/");
         })
     } catch (e) {
