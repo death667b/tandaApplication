@@ -51,23 +51,23 @@ export default class Home extends Component {
 
   renderUsersOrganisations() {
     const userOrganisation = this.props.organisations[this.props.organisationId-1];
+    const curriedHandleEditModalShow = () => this.handleEditModalShow(userOrganisation);
 
     return (
       <div>
-        <h3>My Organisation</h3>
+        <h3>My Organisation: {(this.props.organisations.length < 1) ? '' : userOrganisation.name}</h3>
         {this.props.organisations.length < 1
           ? (
             <p>Loading Organisations...</p>
           )
           : (
             <div>
-              <p>Name: {userOrganisation.name}</p>
               <p>Hourly Rate: {this.currencyFormatted(userOrganisation.hourlyRate)}</p>
               <ButtonToolbar> 
                 <Button 
                   bsStyle="primary" 
                   className='leaveButton' 
-                  onClick={this.handleEditModalShow}
+                  onClick={curriedHandleEditModalShow}
                 >
                   Edit Organisation
                 </Button>
@@ -123,7 +123,7 @@ export default class Home extends Component {
     );
   }
 
-  HandleJoinSubmit = orgId => {
+  HandleJoinSubmit = async orgId => {
     const headers = {
       'Content-Type': 'application/json',
       'Authorization': this.props.sessionId
@@ -134,10 +134,12 @@ export default class Home extends Component {
       }
 
     try {
-      axios.post(`http://localhost:3000/organisations/join`, data, {headers})
-        .then(res => {
-          this.props.userHasChangedOrganisation(orgId);
-        })
+      await axios.post(`http://localhost:3000/organisations/join`, data, {headers})
+      const userListRes = await axios.get(`http://localhost:3000/users`, {headers});
+      const shiftRes = await axios.get(`http://localhost:3000/shifts`, {headers});
+
+      this.props.updateOrganisationAndUserId(orgId, this.props.organisations, shiftRes.data, userListRes.data);
+
     } catch (e) {
       alert(e.response.data.error);
     }
@@ -216,8 +218,6 @@ export default class Home extends Component {
     try {
       await axios.put(`http://localhost:3000/organisations/${orgId}`, updateOrganisation, {headers})
         .then(res => {
-          alert('Organisation successfully updated!');
-
           const oldOrg = JSON.parse(JSON.stringify(this.props.organisations))
           oldOrg[orgId-1] = {id: orgId, ...updateOrganisation};
 
@@ -227,7 +227,12 @@ export default class Home extends Component {
             newHourlyRate: '',
           });
 
-          this.props.upateOrganisations(oldOrg);
+          if(this.props.organisationId) {
+            this.props.updateOrganisationAndUserId(orgId, oldOrg);
+          } else {
+            this.props.updateOrganisation(oldOrg);
+          }
+          
         })
     } catch (e) {
       alert(e.response.data.error);
@@ -250,25 +255,18 @@ export default class Home extends Component {
     }
 
     try {
-      await axios.post(`http://localhost:3000/organisations/create_join`, createOrganisation, {headers})
-        .then(res => {
-          alert('Organisation successfully Created and Joined!');
+      const joinRes = await axios.post(`http://localhost:3000/organisations/create_join`, createOrganisation, {headers})
+      const orgListRespoonse = await axios.get(`http://localhost:3000/organisations`, {headers});
 
-          const oldOrg = JSON.parse(JSON.stringify(this.props.organisations))
-          oldOrg.push(res.data)
+      this.setState({
+        showCreateJoinModal: false,
+        newName: '',
+        newHourlyRate: '',
+      });
 
-          this.setState({
-            showCreateJoinModal: false,
-            newName: '',
-            newHourlyRate: '',
-          });
-
-          this.props.updateOrganisationAndUserId(res.data.id, oldOrg)
-
-          // this.props.upateOrganisations(oldOrg);
-          // this.props.userHasChangedOrganisation(res.data.id);
-        })
+      this.props.updateOrganisationAndUserId(joinRes.data.id, orgListRespoonse.data)
     } catch (e) {
+      console.log(e)
       alert(e.response.data.error);
     }
   }
@@ -284,8 +282,6 @@ export default class Home extends Component {
     try {
       await axios.post(`http://localhost:3000/organisations/leave`, {}, {headers})
         .then(res => {
-          alert('You have successfully left your Organisation!');
-
           this.setState({
             showLeaveModal: false
           });
@@ -433,41 +429,53 @@ export default class Home extends Component {
   renderListShifts() {
     const shifts = this.props.shifts;
 
+    const options = {
+      defaultSortName: 'shiftDate',
+      defaultSortOrder: 'desc'
+    };
+
     return (
-      <BootstrapTable data={ shifts } version='4'>
+      <BootstrapTable data={ shifts } options={ options } version='4'>
         <TableHeaderColumn 
           dataField='id' 
           isKey 
-          // width='30' 
+          width='30' 
+          headerAlign='center'
+          dataAlign='center'
+        >#</TableHeaderColumn>
+        <TableHeaderColumn 
+          dataField='name'
+          width='150' 
           headerAlign='center'
           dataAlign='center'
         >Employee Name</TableHeaderColumn>
-        <TableHeaderColumn dataField='name' headerAlign='center'>Shift Date</TableHeaderColumn>
         <TableHeaderColumn 
-          dataField='hourlyRate' 
+          dataField='shiftDate' 
           headerAlign='center'
           dataAlign='center'
-          dataFormat={ this.currencyFormatted }
+          >Shift Date</TableHeaderColumn>
+        <TableHeaderColumn 
+          dataField='startTime' 
+          headerAlign='center'
+          dataAlign='center'
         >Start Time</TableHeaderColumn>
         <TableHeaderColumn 
-          dataField='id' 
-          // width='220'
-          dataFormat={this.buttonFormatter}
+          dataField='finishTime' 
+          headerAlign='center'
+          dataAlign='center'
         >Finish Time</TableHeaderColumn>
         <TableHeaderColumn 
-          dataField='hourlyRate' 
+          dataField='breakLength' 
           headerAlign='center'
           dataAlign='center'
-          dataFormat={ this.currencyFormatted }
         >Break Length(in minutes)</TableHeaderColumn>
         <TableHeaderColumn 
-          dataField='hourlyRate' 
+          dataField='hoursWorked' 
           headerAlign='center'
           dataAlign='center'
-          dataFormat={ this.currencyFormatted }
         >Hours Worked</TableHeaderColumn>
         <TableHeaderColumn 
-          dataField='hourlyRate' 
+          dataField='shiftCost' 
           headerAlign='center'
           dataAlign='center'
           dataFormat={ this.currencyFormatted }
@@ -510,7 +518,7 @@ export default class Home extends Component {
       <div>
         <div className="Main">
           <h1>Welcome {this.props.name}</h1>
-          <p className="small">Your user number {this.props.userId} and your email address is {this.props.email}</p>
+          <p className="small">Your email is {this.props.email}</p>
           <hr />
         </div>
         <div className="organisations">

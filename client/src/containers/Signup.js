@@ -40,18 +40,31 @@ export default class Signup extends Component {
     };
 
     try {
-      await axios.post(`http://localhost:3000/auth/signup`, newUser)
-        .then(res => {
-          alert('New user successfully created!');
+      const newUserRes = await axios.post(`http://localhost:3000/auth/signup`, newUser)
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': newUserRes.data.sessionId
+      }
+      const orgListRespoonse = await axios.get(`http://localhost:3000/organisations`, {headers});
+      const userInfoResponse = await axios.get(`http://localhost:3000/users/me`, {headers});
 
-          const data = {
-            userHasAuthenticated: true,
-            sessionId: res.data.sessionId
-          }
+      const data = {
+        userHasAuthenticated: true,
+        sessionId: newUserRes.data.sessionId,
+        shifts: [],
+        rawShifts: [],
+        userId: userInfoResponse.data.id,
+        users: [],
+        name: userInfoResponse.data.name,
+        email: userInfoResponse.data.email,
+        organisationId: userInfoResponse.data.organisationId,
+        organisations: orgListRespoonse.data
+      }
 
-          this.props.userHasAuthenticated(data);
-          this.props.history.push("/");
-        })
+      alert('New user successfully created!');
+      this.props.userHasAuthenticated(data);
+      this.props.history.push("/");
+      
     } catch (e) {
       alert(e.response.data.error);
     }

@@ -32,6 +32,7 @@ export default class Login extends Component {
     };
 
     try {
+      let userListResponse, formattedShifts;
       const loginResponse = await axios.post(`http://localhost:3000/auth/login`, user);
       const headers = {
         'Content-Type': 'application/json',
@@ -39,11 +40,24 @@ export default class Login extends Component {
       }
       const orgListRespoonse = await axios.get(`http://localhost:3000/organisations`, {headers});
       const userInfoResponse = await axios.get(`http://localhost:3000/users/me`, {headers});
+      let shiftRes = {data: []};
+      if (userInfoResponse.data.organisationId) {
+        userListResponse = await axios.get(`http://localhost:3000/users`, {headers});
+        shiftRes = await axios.get(`http://localhost:3000/shifts`, {headers});
+        const userOrganisation = orgListRespoonse.data[userInfoResponse.data.organisationId-1];
+        formattedShifts = await this.props.formatShiftRows(shiftRes.data, userListResponse.data, userOrganisation);
+      } else {
+        userListResponse = {data: []};
+        formattedShifts = [];
+      }
 
       const data = {
         userHasAuthenticated: true,
         sessionId: loginResponse.data.sessionId,
+        shifts: formattedShifts,
+        rawShifts: shiftRes.data,
         userId: userInfoResponse.data.id,
+        users: userListResponse.data,
         name: userInfoResponse.data.name,
         email: userInfoResponse.data.email,
         organisationId: userInfoResponse.data.organisationId,

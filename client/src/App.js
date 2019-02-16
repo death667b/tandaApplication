@@ -22,6 +22,9 @@ class App extends Component {
       organisations: [],
       organisationId: null,
       shifts: [],
+      rawShifts: [],
+      userId: null,
+      users: [],
       sessionId: sessionId,
       show: false,
       newEmail: "",
@@ -40,76 +43,77 @@ class App extends Component {
 
   refreshUserData = async sessionId => {
     try {
+      let userListResponse, formattedShifts;
+
       const headers = {
         'Content-Type': 'application/json',
         'Authorization': sessionId
       }
       const orgListRespoonse = await axios.get(`http://localhost:3000/organisations`, {headers});
       const userInfoResponse = await axios.get(`http://localhost:3000/users/me`, {headers});
-
+      let shiftRes = {data: []};
+      if (userInfoResponse.data.organisationId) {
+        userListResponse = await axios.get(`http://localhost:3000/users`, {headers});
+        shiftRes = await axios.get(`http://localhost:3000/shifts`, {headers});
+        const userOrganisation = orgListRespoonse.data[userInfoResponse.data.organisationId-1];
+        formattedShifts = await this.formatShiftRows(shiftRes.data, userListResponse.data, userOrganisation);
+      } else {
+        userListResponse = {data: []};
+        formattedShifts = [];
+      }
+      
       const data = {
         userHasAuthenticated: true,
         sessionId: sessionId,
+        shifts: formattedShifts,
+        rawShifts: shiftRes.data,
         userId: userInfoResponse.data.id,
+        users: userListResponse.data,
         name: userInfoResponse.data.name,
         email: userInfoResponse.data.email,
         organisationId: userInfoResponse.data.organisationId,
         organisations: orgListRespoonse.data
       }
-
+      
       this.userHasAuthenticated(data);
     } catch (e) {
+      console.log(e)
       alert(e.response.data.error);
     }
   }
 
-  getUsers = sessId => {
-    console.log('orgId: ',this.state.organisationId)
-    if (this.state.organisationId) {
-      const sessionId = sessId || this.state.sessionId;
+  formatShiftRows = async (rawShiftData, userData, userOrg) => {
+    const formattedData = [];
+    const hourlyRate = userOrg.hourlyRate;
 
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': sessionId
+
+    rawShiftData.forEach(shift => {
+      const name = userData.filter(user => user.id === shift.userId)[0].name;
+      const startDateObj = new Date(shift.start);
+      const finsihDateObj = new Date(shift.finish);
+      const shiftDate = startDateObj.getDate() + '/' + startDateObj.getMonth() + '/' + startDateObj.getFullYear();
+      const startTime = startDateObj.getHours() + ':' + startDateObj.getMinutes();
+      const finishTime = finsihDateObj.getHours() + ':' + finsihDateObj.getMinutes();
+      const breakLength = shift.breakLength;
+      const hoursWorkedMinutes = (finsihDateObj-startDateObj)/1000/60;
+      const hoursWorked = (hoursWorkedMinutes-breakLength >= 0) ?
+        ((hoursWorkedMinutes-breakLength)/60).toFixed(2) :
+        0;
+      const shiftCost = hourlyRate * hoursWorked;
+
+      const newShift = {
+        id: shift.id,
+        name,
+        shiftDate,
+        startTime,
+        finishTime,
+        breakLength: 10,
+        hoursWorked,
+        shiftCost
       }
-
-      try {
-        axios.get(`http://localhost:3000/users`, {headers})
-          .then(res => {
-            console.log(res.data)
-          })
-      } catch (e) {
-        alert(e.response.data.error);
-      }
-    }
-  }
-
-  getShifts = sessId => {
-    if (this.state.organisationId) {
-      const sessionId = sessId || this.state.sessionId;
-
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': sessionId
-      }
-
-      try {
-        axios.get(`http://localhost:3000/shifts`, {headers})
-          .then(res => {
-            this.formatShiftRows(res.data);
-          })
-      } catch (e) {
-        alert(e.response.data.error);
-      }
-    }
-  }
-
-  formatShiftRows = rawShiftData => {
-    console.log('raw shift data:', rawShiftData)
-
-    this.setState({ 
-      shifts: rawShiftData
-    });
+      formattedData.push(newShift);
+    })
+    return formattedData;
   }
 
   getOrganisationData = sessId => {
@@ -144,17 +148,26 @@ class App extends Component {
     });
   }
 
-  updateOrganisationAndUserId = (orgId, newOrgArray) => {
+  updateOrganisation = organisations => {
     this.setState({
-      organisationId: orgId,
-      organisations: newOrgArray
+      organisations
     });
   }
 
-  upateOrganisations = newOrgArray => {
-    this.setState({
-      organisations: newOrgArray
-    })
+  updateOrganisationAndUserId = async (orgId, newOrgArray, newRawShifts, newUserList) => {
+    const userOrganisation = newOrgArray[orgId-1];
+    const rawShifts = newRawShifts || this.state.rawShifts;
+    const users = newUserList || this.state.users;
+    this.formatShiftRows(rawShifts, users, userOrganisation)
+      .then(shifts => {
+        this.setState({
+          organisationId: orgId,
+          organisations: newOrgArray,
+          shifts,
+          rawShifts,
+          users
+        });
+      })
   }
 
   userHasAuthenticated = (data) => {
@@ -165,7 +178,10 @@ class App extends Component {
       this.setState({ 
         isAuthenticated: data.userHasAuthenticated,
         sessionId: data.sessionId,
+        shifts: data.shifts,
+        rawShifts: data.rawShifts,
         userId: data.id,
+        users: data.users,
         name: data.name,
         email: data.email,
         organisationId: data.organisationId,
@@ -252,8 +268,6 @@ class App extends Component {
     try {
       await axios.put(`http://localhost:3000/users/me`, updateUser, {headers})
         .then(res => {
-          alert('User successfully updated!');
-
           this.setState({ 
             name: res.data.name,
             email: res.data.email,
@@ -282,8 +296,6 @@ class App extends Component {
     try {
       await axios.put(`http://localhost:3000/users/me/change_password`, updatePassword, {headers})
         .then(res => {
-          alert('New password successfully saved!');
-
           this.setState({ 
             oldPassword: "",
             newPassword: "",
@@ -385,10 +397,10 @@ render() {
     sessionId: this.state.sessionId,
     userHasAuthenticated: this.userHasAuthenticated,
     userHasChangedOrganisation: this.userHasChangedOrganisation,
-    upateOrganisations: this.upateOrganisations,
     updateOrganisationAndUserId: this.updateOrganisationAndUserId,
+    updateOrganisation: this.updateOrganisation,
     getOrganisationData: this.getOrganisationData,
-    getShifts: this.getShifts,
+    formatShiftRows: this.formatShiftRows,
     userId: this.state.userId,
     name: this.state.name,
     email: this.state.email,
