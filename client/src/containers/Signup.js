@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { FormGroup, FormControl, ControlLabel, Button } from "react-bootstrap";
+import { FormGroup, FormControl, Checkbox, ControlLabel, Button } from "react-bootstrap";
 import axios from 'axios';
 import "./Signup.css";
 
@@ -11,7 +11,8 @@ export default class Signup extends Component {
       name: "",
       email: "",
       password: "",
-      confirmPassword: ""
+      confirmPassword: "",
+      savePasswordChecked: false
     };
   }
 
@@ -27,6 +28,13 @@ export default class Signup extends Component {
     this.setState({
       [event.target.id]: event.target.value
     });
+  }
+
+  handleCheckBoxChange = event => {
+    const newStatus = (this.state.savePasswordChecked) ? false : true;
+    this.setState({
+      savePasswordChecked: newStatus
+    })
   }
 
   handleSubmit = async event => {
@@ -58,7 +66,8 @@ export default class Signup extends Component {
         name: userInfoResponse.data.name,
         email: userInfoResponse.data.email,
         organisationId: userInfoResponse.data.organisationId,
-        organisations: orgListRespoonse.data
+        organisations: orgListRespoonse.data,
+        savePasswordChecked: this.state.savePasswordChecked
       }
 
       alert('New user successfully created!');
@@ -108,6 +117,15 @@ export default class Signup extends Component {
               type="password"
             />
           </FormGroup>
+          <div className="small">
+            <FormGroup controlId="savePasswordChecked">
+              <Checkbox 
+                type="checkbox"
+                checked={this.state.savePasswordChecked}
+                onChange={this.handleCheckBoxChange}
+              >Save Password</Checkbox>
+            </FormGroup>
+          </div>
           <Button
             block
             bsSize="large"

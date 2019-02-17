@@ -4,6 +4,8 @@ import Routes from "./Routes";
 import axios from 'axios';
 import TopNavBar from './components/TopNavBar.js';
 import { RenderEditUserModal } from './components/Modal.js';
+import formatShiftRows from './util/formatShiftRows.js';
+import refreshUserData from './util/refreshUserData.js';
 
 import "./App.css";
 
@@ -40,102 +42,10 @@ class App extends Component {
 
   componentWillMount() {
     if(this.state.isAuthenticated && this.state.sessionId !== 'null' && this.state.sessionId !== 'undefined') {
-      this.refreshUserData(this.state.sessionId);
-    }
-  }
-
-  refreshUserData = async sessionId => {
-    try {
-      let userListResponse, formattedShifts;
-
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': sessionId
-      }
-      const orgListRespoonse = await axios.get(`http://localhost:3000/organisations`, {headers});
-      const userInfoResponse = await axios.get(`http://localhost:3000/users/me`, {headers});
-      let shiftRes = {data: []};
-      if (userInfoResponse.data.organisationId) {
-        userListResponse = await axios.get(`http://localhost:3000/users`, {headers});
-        shiftRes = await axios.get(`http://localhost:3000/shifts`, {headers});
-        const userOrganisation = orgListRespoonse.data[userInfoResponse.data.organisationId-1];
-        formattedShifts = await this.formatShiftRows(shiftRes.data, userListResponse.data, userOrganisation);
-      } else {
-        userListResponse = {data: []};
-        formattedShifts = [];
-      }
-      
-      const data = {
-        userHasAuthenticated: true,
-        sessionId: sessionId,
-        shifts: formattedShifts,
-        rawShifts: shiftRes.data,
-        userId: userInfoResponse.data.id,
-        users: userListResponse.data,
-        name: userInfoResponse.data.name,
-        email: userInfoResponse.data.email,
-        organisationId: userInfoResponse.data.organisationId,
-        organisations: orgListRespoonse.data
-      }
-      
-      this.userHasAuthenticated(data);
-    } catch (e) {
-      console.log(e)
-      alert(e.response.data.error);
-    }
-  }
-
-  formatShiftRows = async (rawShiftData, userData, userOrg) => {
-    const formattedData = [];
-    const hourlyRate = userOrg.hourlyRate;
-
-
-    rawShiftData.forEach(shift => {
-      const name = userData.filter(user => user.id === shift.userId)[0].name;
-      const startDateObj = new Date(shift.start);
-      const finsihDateObj = new Date(shift.finish);
-      const shiftDate = startDateObj.getDate() + '/' + startDateObj.getMonth() + '/' + startDateObj.getFullYear();
-      const startTime = startDateObj.getHours() + ':' + startDateObj.getMinutes();
-      const finishTime = finsihDateObj.getHours() + ':' + finsihDateObj.getMinutes();
-      const breakLength = shift.breakLength;
-      const hoursWorkedMinutes = (finsihDateObj-startDateObj)/1000/60;
-      const hoursWorked = (hoursWorkedMinutes-breakLength >= 0) ?
-        ((hoursWorkedMinutes-breakLength)/60).toFixed(2) :
-        0;
-      const shiftCost = hourlyRate * hoursWorked;
-
-      const newShift = {
-        id: shift.id,
-        name,
-        shiftDate,
-        startTime,
-        finishTime,
-        breakLength: 10,
-        hoursWorked,
-        shiftCost
-      }
-      formattedData.push(newShift);
-    })
-    return formattedData;
-  }
-
-  getOrganisationData = sessId => {
-    const sessionId = sessId || this.state.sessionId;
-
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': sessionId
-    }
-
-    try {
-      axios.get(`http://localhost:3000/organisations`, {headers})
-        .then(res => {
-          this.setState({ 
-            organisations: res.data
-          });
+      refreshUserData(this.state.sessionId)
+        .then(data => {
+          this.userHasAuthenticated(data);
         })
-    } catch (e) {
-      alert(e.response.data.error);
     }
   }
 
@@ -161,7 +71,7 @@ class App extends Component {
     const userOrganisation = newOrgArray[orgId-1];
     const rawShifts = newRawShifts || this.state.rawShifts;
     const users = newUserList || this.state.users;
-    this.formatShiftRows(rawShifts, users, userOrganisation)
+    formatShiftRows(rawShifts, users, userOrganisation)
       .then(shifts => {
         this.setState({
           organisationId: orgId,
@@ -176,9 +86,7 @@ class App extends Component {
   userHasAuthenticated = (data) => {
     // Get all the details of the user if there is a sessionId
     if (data.userHasAuthenticated && data.sessionId !== 'null' && data.sessionId !== 'undefined') {
-      localStorage.setItem('sessionId', data.sessionId);
-
-      console.log(data)
+      data.savePasswordChecked && localStorage.setItem('sessionId', data.sessionId);
 
       this.setState({ 
         isAuthenticated: data.userHasAuthenticated,
@@ -318,8 +226,6 @@ render() {
     userHasChangedOrganisation: this.userHasChangedOrganisation,
     updateOrganisationAndUserId: this.updateOrganisationAndUserId,
     updateOrganisation: this.updateOrganisation,
-    getOrganisationData: this.getOrganisationData,
-    formatShiftRows: this.formatShiftRows,
     userId: this.state.userId,
     name: this.state.name,
     email: this.state.email,

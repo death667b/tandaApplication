@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import { Link } from "react-router-dom";
 import axios from 'axios';
-import { Button, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
+import { Button, FormGroup, Checkbox, FormControl, ControlLabel } from "react-bootstrap";
+import refreshUserData from '../util/refreshUserData.js';
 import "./Login.css";
 
 export default class Login extends Component {
@@ -10,7 +11,8 @@ export default class Login extends Component {
 
     this.state = {
       email: "",
-      password: ""
+      password: "",
+      savePasswordChecked: false,
     };
   }
 
@@ -24,6 +26,13 @@ export default class Login extends Component {
     });
   }
 
+  handleCheckBoxChange = event => {
+    const newStatus = (this.state.savePasswordChecked) ? false : true;
+    this.setState({
+      savePasswordChecked: newStatus
+    })
+  }
+
   handleSubmit = async event => {
     event.preventDefault();
 
@@ -33,40 +42,14 @@ export default class Login extends Component {
     };
 
     try {
-      let userListResponse, formattedShifts;
       const loginResponse = await axios.post(`http://localhost:3000/auth/login`, user);
-      const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': loginResponse.data.sessionId
-      }
-      const orgListRespoonse = await axios.get(`http://localhost:3000/organisations`, {headers});
-      const userInfoResponse = await axios.get(`http://localhost:3000/users/me`, {headers});
-      let shiftRes = {data: []};
-      if (userInfoResponse.data.organisationId) {
-        userListResponse = await axios.get(`http://localhost:3000/users`, {headers});
-        shiftRes = await axios.get(`http://localhost:3000/shifts`, {headers});
-        const userOrganisation = orgListRespoonse.data[userInfoResponse.data.organisationId-1];
-        formattedShifts = await this.props.formatShiftRows(shiftRes.data, userListResponse.data, userOrganisation);
-      } else {
-        userListResponse = {data: []};
-        formattedShifts = [];
-      }
-
-      const data = {
-        userHasAuthenticated: true,
-        sessionId: loginResponse.data.sessionId,
-        shifts: formattedShifts,
-        rawShifts: shiftRes.data,
-        userId: userInfoResponse.data.id,
-        users: userListResponse.data,
-        name: userInfoResponse.data.name,
-        email: userInfoResponse.data.email,
-        organisationId: userInfoResponse.data.organisationId,
-        organisations: orgListRespoonse.data
-      }
-
-      this.props.userHasAuthenticated(data);
-      this.props.history.push("/");
+      
+      refreshUserData(loginResponse.data.sessionId)
+        .then(data => {
+          const { savePasswordChecked } = this.state;
+          this.props.userHasAuthenticated({savePasswordChecked, ...data});
+          this.props.history.push("/");
+        })
     } catch (e) {
       alert(e.response.data.error);
     }
@@ -93,7 +76,16 @@ export default class Login extends Component {
               type="password"
             />
           </FormGroup>
-          <p className="small"><Link to="/forgotpassword">Reset Pasword</Link></p>
+          <div className="small">
+            <FormGroup controlId="savePasswordChecked">
+              <Checkbox 
+                type="checkbox"
+                checked={this.state.savePasswordChecked}
+                onChange={this.handleCheckBoxChange}
+              >Save Password</Checkbox>
+              <Link to="/forgotpassword">Reset Pasword</Link>
+            </FormGroup>
+          </div>
           <Button
             block
             bsSize="large"

@@ -28,82 +28,6 @@ export default class Home extends Component {
     };
   }
 
-  renderWelcomePage() {
-    return (
-      <div className="lander">
-        <h1>Adnat</h1>
-        <p>A simple roster app</p>
-      </div>
-    );
-  }
-
-  renderNoUserOrganisations() {
-    const childProps = {
-      organisations: this.props.organisations,
-      handleEditModalShow: this.handleEditModalShow,
-      HandleJoinSubmit: this.HandleJoinSubmit
-    }
-
-    return (
-      <div>
-        <h3>Organisations</h3>
-        <p>
-          You are currently not apart of any Organisations. Please join or create one.<br />
-          <Button 
-            bsStyle="primary" 
-            className='joinCreateButton' 
-            onClick={this.handleCreateJoinModalShow}
-          >
-            Create and Join new Organisation
-          </Button>
-        </p>
-        <ListOrganisations props={childProps}/>
-      </div>
-
-    )
-  }
-
-  renderUsersOrganisations() {
-    const userOrganisation = this.props.organisations[this.props.organisationId-1];
-    const curriedHandleEditModalShow = () => this.handleEditModalShow(userOrganisation);
-
-    return (
-      <div>
-        <h3>My Organisation: {(this.props.organisations.length < 1) ? '' : userOrganisation.name}</h3>
-        {this.props.organisations.length < 1
-          ? (
-            <p>Loading Organisations...</p>
-          )
-          : (
-            <div>
-              <p>Hourly Rate: {currencyFormatted(userOrganisation.hourlyRate)}</p>
-              <ButtonToolbar> 
-                <Button 
-                  bsStyle="primary" 
-                  className='leaveButton' 
-                  onClick={curriedHandleEditModalShow}
-                >
-                  Edit Organisation
-                </Button>
-                <Button 
-                  bsStyle="danger" 
-                  className='leaveButton' 
-                  onClick={this.handleLeaveModalShow}
-                >
-                  Leave Organisation
-                </Button>
-              </ButtonToolbar> 
-            
-
-              {/* Display shifts section */}
-              <h3>Shifts at {userOrganisation.name}</h3>
-              <ListShifts shifts={this.props.shifts}/>
-            </div>
-          )}
-      </div>
-    )
-  }
-
   validateOrgModalForm = () => {
     return (
       this.state.newName.length > 0 &&
@@ -267,6 +191,82 @@ export default class Home extends Component {
     } catch (e) {
       alert(e.response.data.error);
     }
+  }
+
+  renderWelcomePage() {
+    return (
+      <div className="lander">
+        <h1>Adnat</h1>
+        <p>A simple roster app</p>
+      </div>
+    );
+  }
+
+  renderNoUserOrganisations() {
+    const childProps = {
+      organisations: this.props.organisations,
+      handleEditModalShow: this.handleEditModalShow,
+      HandleJoinSubmit: this.HandleJoinSubmit
+    }
+
+    return (
+      <div>
+        <h3>Organisations</h3>
+        <p>
+          You are currently not apart of any Organisations. Please join or create one.<br />
+          <Button 
+            bsStyle="primary" 
+            className='joinCreateButton' 
+            onClick={this.handleCreateJoinModalShow}
+          >
+            Create and Join new Organisation
+          </Button>
+        </p>
+        <ListOrganisations props={childProps}/>
+      </div>
+
+    )
+  }
+
+  renderUsersOrganisations() {
+    const userOrganisation = this.props.organisations[this.props.organisationId-1];
+    const curriedHandleEditModalShow = () => this.handleEditModalShow(userOrganisation);
+
+    return (
+      <div>
+        <h3>My Organisation: {(this.props.organisations.length < 1) ? '' : userOrganisation.name}</h3>
+        {this.props.organisations.length < 1
+          ? (
+            <p>Loading Organisations...</p>
+          )
+          : (
+            <div>
+              <p>Hourly Rate: {currencyFormatted(userOrganisation.hourlyRate)}</p>
+              <ButtonToolbar> 
+                <Button 
+                  bsStyle="primary" 
+                  className='leaveButton' 
+                  onClick={curriedHandleEditModalShow}
+                >
+                  Edit Organisation
+                </Button>
+                <Button 
+                  bsStyle="danger" 
+                  className='leaveButton' 
+                  onClick={this.handleLeaveModalShow}
+                >
+                  Leave Organisation
+                </Button>
+              </ButtonToolbar> 
+            
+
+              {/* Display shifts section */}
+              <h3>Shifts at {userOrganisation.name}</h3>
+              <ListShifts shifts={this.props.shifts}/>
+            </div>
+          )}
+      </div>
+    )
   }
 
   renderMainPage() {
