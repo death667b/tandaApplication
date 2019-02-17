@@ -22,7 +22,7 @@ const formatShiftRows = async (rawShiftData, userData, userOrg) => {
       shiftDate,
       startTime,
       finishTime,
-      breakLength: 10,
+      breakLength,
       hoursWorked,
       shiftCost
     }
