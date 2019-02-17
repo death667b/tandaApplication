@@ -96,4 +96,33 @@ router.put("/me/change_password", (req, res) => {
     });
 });
 
+router.put("/me/reset_password", (req, res) => {
+  const {
+    newPassword: newplaintextPassword,
+    newPasswordConfirmation: newplaintextPasswordConfirmation
+  } = req.body;
+
+  if (newplaintextPassword !== newplaintextPasswordConfirmation) {
+    return res
+      .status(400)
+      .json({ error: "Password does not match password confirmation" });
+  }
+
+  hashPassword(newplaintextPassword)
+    .then(password => {
+      DB.run(
+        "UPDATE users SET password = ? WHERE id = ?",
+        password,
+        req.user.id
+      );
+    })
+    .then(() => res.sendStatus(200))
+    .catch(err => {
+      if (err && err.statusCode) {
+        return res.status(err.statusCode).json({ error: err.error });
+      }
+      throw err;
+    });
+});
+
 module.exports = router;
