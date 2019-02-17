@@ -1,17 +1,14 @@
 import React from 'react';
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 import currencyFormatted from '../util/currencyFormatted.js';
+import sortShifts from '../util/sortShifts.js';
 
 const ListShifts = parentProps => {
   const { shifts } = parentProps;
-
-  const options = {
-    defaultSortName: 'shiftDate',
-    defaultSortOrder: 'desc'
-  };
+  const sortedShifts = sortShifts(shifts);
 
   return (
-    <BootstrapTable data={ shifts } options={ options } version='4'>
+    <BootstrapTable data={ sortedShifts } version='4'>
       <TableHeaderColumn 
         dataField='id' 
         isKey 
