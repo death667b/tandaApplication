@@ -1,10 +1,13 @@
 Step 1:
-run `npm run build` or `yarn build`
+Move to the directory `/tandaApplication` 
 
 Step 2:
-In one terminal window run `npm run start:backend` or `yarn start:backend`
+run `npm run build` or `yarn build`
 
 Step 3:
+In one terminal windows run `npm run start:backend` or `yarn start:backend`
+
+Step 4:
 In a second terminal window run `npm run start:frontend` or `yarn start:frontend`
 
 Features:
