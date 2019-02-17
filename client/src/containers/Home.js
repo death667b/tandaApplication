@@ -288,6 +288,26 @@ export default class Home extends Component {
     }
   }
 
+  handleEditShiftModalShow = async row => {
+
+  }
+
+  HandleDeleteShiftSubmit = async shiftId => {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': this.props.sessionId
+    }
+
+    try {
+      await axios.delete(`http://localhost:3000/shifts/${shiftId}`, {headers})
+        .then(res => {
+          this.props.removeOneShift(shiftId);
+        })
+    } catch (e) {
+      alert(e.response.data.error);
+    }
+  }
+
   handleLeaveModalSubmit = async event => {
     event.preventDefault();
 
@@ -348,6 +368,11 @@ export default class Home extends Component {
   renderUsersOrganisations() {
     const userOrganisation = this.props.organisations[this.props.organisationId-1];
     const curriedHandleEditModalShow = () => this.handleEditModalShow(userOrganisation);
+    const shiftProps = {
+      handleEditShiftModalShow: this.handleEditShiftModalShow,
+      HandleDeleteShiftSubmit: this.HandleDeleteShiftSubmit,
+      shifts: this.props.shifts,
+    }
 
     return (
       <div>
@@ -388,7 +413,7 @@ export default class Home extends Component {
                   Add new shift
                 </Button>
               </ButtonToolbar> 
-              <ListShifts shifts={this.props.shifts}/>
+              <ListShifts props={shiftProps}/>
             </div>
           )}
       </div>

@@ -352,8 +352,8 @@ export class RenderNewShiftModal extends PureComponent {
                 disabled
                 value={homeState.hoursWorked}
               />
-            <FormGroup controlId="shiftCost" bsSize="large">
             </FormGroup>
+            <FormGroup controlId="shiftCost" bsSize="large">
               <ControlLabel>Shift Cost</ControlLabel>
               <FormControl
                 type="text"

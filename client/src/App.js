@@ -86,6 +86,24 @@ class App extends Component {
       })
   }
 
+  removeOneShift = async shiftId => {
+    const shiftsCopy = JSON.parse(JSON.stringify(this.state.rawShifts))
+    const newShifts = shiftsCopy.filter(shift => shift.id !== shiftId);
+
+    const userOrganisation = this.state.organisations[this.state.organisationId-1];
+    const users = this.state.users;
+
+    formatShiftRows(newShifts, users, userOrganisation)
+      .then(shifts => {
+        this.setState({
+          shifts,
+          rawShifts: newShifts
+        });
+      }).catch(e => {
+        console.log(e);
+      })
+  }
+
   updateOrganisationAndUserId = async (orgId, newOrgArray, newRawShifts, newUserList) => {
     const userOrganisation = newOrgArray[orgId-1];
     const rawShifts = newRawShifts || this.state.rawShifts;
@@ -245,6 +263,7 @@ render() {
     users: this.state.users,
     allUsers: this.state.allUsers,
     addNewShift: this.addNewShift,
+    removeOneShift: this.removeOneShift,
     userHasAuthenticated: this.userHasAuthenticated,
     userHasChangedOrganisation: this.userHasChangedOrganisation,
     updateOrganisationAndUserId: this.updateOrganisationAndUserId,

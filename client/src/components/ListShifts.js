@@ -1,11 +1,32 @@
 import React from 'react';
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
+import { Button, ButtonToolbar } from 'react-bootstrap'
 import currencyFormatted from '../util/currencyFormatted.js';
 import sortShifts from '../util/sortShifts.js';
 
 const ListShifts = parentProps => {
-  const { shifts } = parentProps;
+  const { shifts, handleEditShiftModalShow, HandleDeleteShiftSubmit } = parentProps.props;
   const sortedShifts = sortShifts(shifts);
+
+  const buttonFormatter = (cell, row) => {
+    const curriedHandleEditShiftModalShow = () => handleEditShiftModalShow(row);
+    const curriedHandleDeleteShiftSubmit = () => HandleDeleteShiftSubmit(row.id);
+
+    return (
+    <ButtonToolbar className='orgButtonToolbar'>        
+      <Button 
+        className='orgButton' 
+        bsStyle='primary'
+        onClick={curriedHandleEditShiftModalShow}
+      >Edit</Button>
+      <Button 
+        className='orgButton' 
+        bsStyle='danger' 
+        onClick={curriedHandleDeleteShiftSubmit}
+      >Delete</Button>
+    </ButtonToolbar>
+    );
+  }
 
   return (
     <BootstrapTable data={ sortedShifts } version='4'>
@@ -53,11 +74,16 @@ const ListShifts = parentProps => {
       >Hours Worked</TableHeaderColumn>
       <TableHeaderColumn 
         dataField='shiftCost' 
-        width='140'
+        width='110'
         headerAlign='center'
         dataAlign='center'
         dataFormat={ currencyFormatted }
       >Shift Cost</TableHeaderColumn>
+      <TableHeaderColumn 
+        dataField='id' 
+        width='200'
+        dataFormat={buttonFormatter}
+      ></TableHeaderColumn>
     </BootstrapTable>
   )
 } 
