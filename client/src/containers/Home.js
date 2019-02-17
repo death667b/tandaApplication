@@ -5,7 +5,8 @@ import {
   RenderEditOrgModal, 
   RenderCreateJoinOrgModal, 
   RenderLeaveOrgModal,
-  RenderNewShiftModal } from '../components/Modal.js';
+  RenderNewShiftModal,
+  RenderEditShiftModal } from '../components/Modal.js';
 import ListOrganisations from '../components/ListOrganisations.js';
 import ListShifts from '../components/ListShifts.js';
 import currencyFormatted from '../util/currencyFormatted.js';
@@ -23,8 +24,10 @@ export default class Home extends Component {
       showCreateJoinModal: false,
       showLeaveModal: false,
       showNewShiftModal: false,
+      showEditShiftModal: false,
       newName: '',
       newHourlyRate: '',
+      shiftId: null,
       orgId: '',
       orgName: '',
       breakTime: 0,
@@ -95,6 +98,7 @@ export default class Home extends Component {
       showCreateJoinModal: false,
       showLeaveModal: false,
       showNewShiftModal: false,
+      showEditShiftModal: false,
       newName: '',
       newHourlyRate: '',
     });
@@ -257,6 +261,40 @@ export default class Home extends Component {
     }
   }
 
+  handleEditShiftModalSubmit = async event => {
+    event.preventDefault();
+
+    const id = this.state.shiftId;
+    const updatedShift = {
+      userId: this.state.selectedOptionId,
+      start: formatTime(this.state.startDate),
+      finish: formatTime(this.state.finishDate),
+      breakLength: this.state.breakTime,
+      id
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': this.props.sessionId
+    }
+
+    try {
+      await axios.put(`http://localhost:3000/shifts/${id}`, updatedShift, {headers})
+  
+      this.setState({
+        showEditShiftModal: false,
+        breakTime: 0,
+        hoursWorked: 0,
+        shiftCost: 0,
+      });
+
+      this.props.addNewShift(updatedShift);
+    } catch (e) {
+      console.log(e)
+      alert(e.response.data.error);
+    }
+  }
+
   handleOrgCreateJoinModalSubmit = async event => {
     event.preventDefault();
 
@@ -289,7 +327,32 @@ export default class Home extends Component {
   }
 
   handleEditShiftModalShow = async row => {
+    const { rawShifts } = this.props;
+    const actualShift = rawShifts.filter(shift => shift.id === row.id)
+    let hourlyRate = 0;
+    if (this.props.organisations.length > 0) {
+      hourlyRate = this.props.organisations[this.props.organisationId-1].hourlyRate
+    }
+    const { hoursWorked, shiftCost } = calcHoursWorked(
+      new Date(actualShift[0].start), 
+      new Date(actualShift[0].finish),
+      actualShift[0].breakLength, 
+      hourlyRate);
+    let currentUser = '';
+    (this.props.allUsers.length > 0) && (currentUser = this.props.allUsers[this.props.userId-1]);
+      
 
+    this.setState({
+      selectedOption: row.name,
+      selectedOptionId: currentUser.id,
+      breakTime: actualShift[0].breakLength,
+      startDate: new Date(actualShift[0].start),
+      finishDate: new Date(actualShift[0].finish),
+      showEditShiftModal: true,
+      hoursWorked, 
+      shiftCost,
+      shiftId: row.id,
+    })
   }
 
   HandleDeleteShiftSubmit = async shiftId => {
@@ -445,6 +508,7 @@ export default class Home extends Component {
       handleChange: this.handleChange,
       handleBreakTimeChange: this.handleBreakTimeChange,
       handleStartDataChange: this.handleStartDataChange,
+      handleEditShiftModalSubmit: this.handleEditShiftModalSubmit,
       handleFinishDataChange: this.handleFinishDataChange,
       handleOrgUpdateModalSubmit: this.handleOrgUpdateModalSubmit,
       handleOrgCreateJoinModalSubmit: this.handleOrgCreateJoinModalSubmit,
@@ -462,6 +526,7 @@ export default class Home extends Component {
         <RenderCreateJoinOrgModal childProps={modalProps}/>
         <RenderLeaveOrgModal childProps={modalProps}/>
         <RenderNewShiftModal childProps={modalProps}/>
+        <RenderEditShiftModal childProps={modalProps}/>
       </div>
     );
   }

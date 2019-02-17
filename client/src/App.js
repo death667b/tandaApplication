@@ -75,16 +75,17 @@ class App extends Component {
 
   addNewShift = async newShift => {
     const shiftsCopy = JSON.parse(JSON.stringify(this.state.rawShifts))
-    shiftsCopy.push(newShift)
+    const filteredShifts = shiftsCopy.filter(shift => shift.id !== newShift.id)
+    filteredShifts.push(newShift)
     
     const userOrganisation = this.state.organisations[this.state.organisationId-1];
     const users = this.state.users;
 
-    formatShiftRows(shiftsCopy, users, userOrganisation)
+    formatShiftRows(filteredShifts, users, userOrganisation)
       .then(shifts => {
         this.setState({
           shifts,
-          rawShifts: shiftsCopy
+          rawShifts: filteredShifts
         });
       }).catch(e => {
         console.log(e);
@@ -279,7 +280,8 @@ render() {
     email: this.state.email,
     organisationId: this.state.organisationId,
     organisations: this.state.organisations,
-    shifts: this.state.shifts
+    shifts: this.state.shifts,
+    rawShifts: this.state.rawShifts
   };
 
   const narBarProps = {

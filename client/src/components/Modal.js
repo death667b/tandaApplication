@@ -381,3 +381,116 @@ export class RenderNewShiftModal extends PureComponent {
     )
   }
 }
+
+export class RenderEditShiftModal extends PureComponent {
+  render() {
+    const {
+      homeState,
+      appProps,
+      handleModalClose,
+      handleBreakTimeChange,
+      handleStartDataChange,
+      handleFinishDataChange,
+      handleEditShiftModalSubmit,
+      validateNewShiftModalForm,
+      handleDropdownOptionChange
+    } = this.props.childProps;
+
+    const { allUsers } = appProps;
+
+    const userOrganisation = appProps.organisations[appProps.organisationId-1] || {};
+    const orgUsers = allUsers.filter(user => user.organisationId === userOrganisation.id);
+
+    const curriedhandleDropdownOptionChange = (eventKey, event)  => {
+      handleDropdownOptionChange(orgUsers[eventKey]);
+    }
+
+    return (
+      <Modal 
+        show={homeState.showEditShiftModal} 
+        onHide={handleModalClose} 
+        aria-labelledby="CreateJoinOrgModal"
+        dialogClassName="newShiftModal"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Shift for {userOrganisation.name}</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <form>
+            
+            <FormGroup controlId="selectedEmpployeeName" bsSize="large">
+              <ControlLabel className='datepicker'>Employee Name</ControlLabel>
+              <DropdownButton         
+                id="selectedEmpployeeName"
+                onSelect={curriedhandleDropdownOptionChange}
+                title={homeState.selectedOption || 'Select'}
+              >
+                {(orgUsers.length > 0) && orgUsers.map((opt, i) => (
+                  <MenuItem key={i} eventKey={i}>
+                    {opt.name}
+                  </MenuItem>
+                ))}
+              </DropdownButton>
+            </FormGroup>
+
+            <FormGroup controlId="startDateTime" bsSize="large">
+              <ControlLabel className='datepicker'>Start Date/Time</ControlLabel>
+              <DateTimePicker
+                onChange={handleStartDataChange}
+                value={homeState.startDate}
+              />
+            </FormGroup>
+            <FormGroup controlId="finishDateTime" bsSize="large">
+              <ControlLabel className='datepicker'>Finish Date/Time</ControlLabel>
+              <DateTimePicker
+                onChange={handleFinishDataChange}
+                value={homeState.finishDate}
+                minDate={homeState.startDate}
+              />
+            </FormGroup>
+              
+            <FormGroup controlId="breakTime" bsSize="large">
+            <ControlLabel>Break time (in minutes)</ControlLabel>
+              <FormControl
+                type="number"
+                value={homeState.breakTime}
+                onChange={handleBreakTimeChange}
+              />
+            </FormGroup>
+            <FormGroup controlId="hoursWorked" bsSize="large">
+              <ControlLabel>Hours Worked</ControlLabel>
+              <FormControl
+                type="text"
+                disabled
+                value={homeState.hoursWorked}
+              />
+            </FormGroup>
+            <FormGroup controlId="shiftCost" bsSize="large">
+              <ControlLabel>Shift Cost</ControlLabel>
+              <FormControl
+                type="text"
+                disabled
+                value={homeState.shiftCost}
+              />
+            </FormGroup>
+          </form>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button bsStyle="danger" onClick={handleModalClose}>
+            Cancel
+          </Button>
+            <Button
+              bsStyle="warning"
+              disabled={!validateNewShiftModalForm()}
+              type="submit"
+              onClick={handleEditShiftModalSubmit}
+            >
+              Update shift
+            </Button>
+        </Modal.Footer>
+      </Modal>
+    )
+  }
+}
