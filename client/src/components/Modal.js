@@ -333,6 +333,7 @@ export class RenderNewShiftModal extends PureComponent {
               <DateTimePicker
                 onChange={handleFinishDataChange}
                 value={homeState.finishDate}
+                minDate={homeState.startDate}
               />
             </FormGroup>
               

@@ -113,12 +113,14 @@ export default class Home extends Component {
   }
   
   handleStartDataChange = startDate => {
-    const { finishDate, breakTime } = this.state;
+    let { finishDate, breakTime } = this.state;
+    if(finishDate < startDate) finishDate = startDate;
     const hourlyRate = this.props.organisations[this.props.organisationId-1].hourlyRate;
     const { hoursWorked, shiftCost } = calcHoursWorked(startDate, finishDate, breakTime, hourlyRate);
 
       this.setState({ 
         startDate,
+        finishDate,
         hoursWorked,
         shiftCost
       });
