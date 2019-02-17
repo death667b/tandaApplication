@@ -57,8 +57,13 @@ class App extends Component {
   }
 
   userHasChangedOrganisation = orgId => {
+    const allUsersCopy = JSON.parse(JSON.stringify(this.state.allUsers))
+    const userId = this.state.userId;
+    allUsersCopy[userId-1].organisationId = orgId;
+
     this.setState({
-      organisationId: orgId
+      organisationId: orgId,
+      allUsers: allUsersCopy
     });
   }
 
@@ -108,6 +113,7 @@ class App extends Component {
     const userOrganisation = newOrgArray[orgId-1];
     const rawShifts = newRawShifts || this.state.rawShifts;
     const users = newUserList || this.state.users;
+    this.userHasChangedOrganisation(orgId)
     formatShiftRows(rawShifts, users, userOrganisation)
       .then(shifts => {
         this.setState({
