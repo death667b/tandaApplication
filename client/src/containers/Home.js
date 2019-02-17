@@ -1,7 +1,15 @@
 import React, { Component } from "react";
-import { Button, ButtonToolbar, Modal, FormGroup, FormControl, ControlLabel } from 'react-bootstrap'
-import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
+import { Button, ButtonToolbar } from 'react-bootstrap'
 import axios from 'axios';
+
+import { 
+  RenderEditOrgModal, 
+  RenderCreateJoinOrgModal, 
+  RenderLeaveOrgModal } from '../components/Modal.js';
+import ListOrganisations from '../components/ListOrganisations.js';
+import ListShifts from '../components/ListShifts.js';
+import currencyFormatted from '../util/currencyFormatted.js';
+import cleanHourlyRate from '../util/cleanHourlyRate.js';
 
 import "./Home.css";
 
@@ -30,6 +38,12 @@ export default class Home extends Component {
   }
 
   renderNoUserOrganisations() {
+    const childProps = {
+      organisations: this.props.organisations,
+      handleEditModalShow: this.handleEditModalShow,
+      HandleJoinSubmit: this.HandleJoinSubmit
+    }
+
     return (
       <div>
         <h3>Organisations</h3>
@@ -43,7 +57,7 @@ export default class Home extends Component {
             Create and Join new Organisation
           </Button>
         </p>
-        {this.renderListOrganisations()}
+        <ListOrganisations props={childProps}/>
       </div>
 
     )
@@ -62,7 +76,7 @@ export default class Home extends Component {
           )
           : (
             <div>
-              <p>Hourly Rate: {this.currencyFormatted(userOrganisation.hourlyRate)}</p>
+              <p>Hourly Rate: {currencyFormatted(userOrganisation.hourlyRate)}</p>
               <ButtonToolbar> 
                 <Button 
                   bsStyle="primary" 
@@ -83,43 +97,17 @@ export default class Home extends Component {
 
               {/* Display shifts section */}
               <h3>Shifts at {userOrganisation.name}</h3>
-              {this.renderListShifts()}
+              <ListShifts shifts={this.props.shifts}/>
             </div>
           )}
       </div>
     )
   }
 
-  renderOrganisationItem = props => {
+  validateOrgModalForm = () => {
     return (
-      <div></div>
-    )
-  }
-
-  currencyFormatted = (amount) => {
-    let i = parseFloat(amount);
-    if(isNaN(i)) i = 0.00; 
-    let minus = '';
-    if(i < 0) minus = '-';
-    i = Math.abs(i);
-    i = parseInt((i + .005) * 100);
-    i = i / 100;
-    let s = i.toString();
-    if(s.indexOf('.') < 0) { s += '.00'; }
-    if(s.indexOf('.') === (s.length - 2)) { s += '0'; }
-    s = '$' + minus + s;
-    return s;
-  }
-
-  buttonFormatter = (cell, row) => {
-    const curriedHandleEditModalShow = () => this.handleEditModalShow(row);
-    const curriedHandleJoinSubmit = () => this.HandleJoinSubmit(row.id);
-
-    return (
-    <ButtonToolbar className='orgButtonToolbar'>        
-      <Button className='orgButton' onClick={curriedHandleEditModalShow}>Edit</Button>
-      <Button className='orgButton' onClick={curriedHandleJoinSubmit}>Join</Button>
-    </ButtonToolbar>
+      this.state.newName.length > 0 &&
+      cleanHourlyRate(this.state.newHourlyRate)
     );
   }
 
@@ -187,22 +175,10 @@ export default class Home extends Component {
     });
   }
 
-  cleanHourlyRate = rate => {
-    const newHourlyRate = parseFloat(rate);
-    return (newHourlyRate > 0) ? newHourlyRate : false;
-  }
-
-  validateOrgModalForm() {
-    return (
-      this.state.newName.length > 0 &&
-      this.cleanHourlyRate(this.state.newHourlyRate)
-    );
-  }
-
   handleOrgUpdateModalSubmit = async event => {
     event.preventDefault();
 
-    const cleanedHourlyRate = this.cleanHourlyRate(this.state.newHourlyRate);
+    const cleanedHourlyRate = cleanHourlyRate(this.state.newHourlyRate);
     const orgId = this.state.orgId;
 
     const updateOrganisation = {
@@ -242,7 +218,7 @@ export default class Home extends Component {
   handleOrgCreateJoinModalSubmit = async event => {
     event.preventDefault();
 
-    const cleanedHourlyRate = this.cleanHourlyRate(this.state.newHourlyRate);
+    const cleanedHourlyRate = cleanHourlyRate(this.state.newHourlyRate);
 
     const createOrganisation = {
       name: this.state.newName,
@@ -293,226 +269,6 @@ export default class Home extends Component {
     }
   }
 
-  renderEditOrgModal = () => {
-    return (
-      <Modal 
-        show={this.state.showEditModal} 
-        onHide={this.handleModalClose} 
-        aria-labelledby="EditOrgModal"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Editing Details for {this.state.orgName}</Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body>
-          <form>
-            <FormGroup controlId="newName" bsSize="large">
-              <ControlLabel>New Organisation Name</ControlLabel>
-              <FormControl
-                autoFocus
-                type="name"
-                value={this.state.newName}
-                onChange={this.handleChange}
-              />
-            </FormGroup>
-            <FormGroup controlId="newHourlyRate" bsSize="large">
-              <ControlLabel>New Hourly Rate</ControlLabel>
-              <FormControl
-                autoFocus
-                type="tel"
-                value={this.state.newHourlyRate}
-                onChange={this.handleChange}
-              />
-            </FormGroup>
-          </form>
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button bsStyle="danger" onClick={this.handleModalClose}>
-            Cancel
-          </Button>
-            <Button
-              bsStyle="success"
-              disabled={!this.validateOrgModalForm()}
-              type="submit"
-              onClick={this.handleOrgUpdateModalSubmit}
-            >
-              Update
-            </Button>
-        </Modal.Footer>
-      </Modal>
-    )
-  }
-
-  renderCreateJoinOrgModal = () => {
-    return (
-      <Modal 
-        show={this.state.showCreateJoinModal} 
-        onHide={this.handleModalClose} 
-        aria-labelledby="CreateJoinOrgModal"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Create and join a new organisation</Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body>
-          <form>
-            <FormGroup controlId="newName" bsSize="large">
-              <ControlLabel>New Organisation Name</ControlLabel>
-              <FormControl
-                autoFocus
-                type="name"
-                value={this.state.newName}
-                onChange={this.handleChange}
-              />
-            </FormGroup>
-            <FormGroup controlId="newHourlyRate" bsSize="large">
-              <ControlLabel>New Hourly Rate</ControlLabel>
-              <FormControl
-                autoFocus
-                type="tel"
-                value={this.state.newHourlyRate}
-                onChange={this.handleChange}
-              />
-            </FormGroup>
-          </form>
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button bsStyle="danger" onClick={this.handleModalClose}>
-            Cancel
-          </Button>
-            <Button
-              bsStyle="success"
-              disabled={!this.validateOrgModalForm()}
-              type="submit"
-              onClick={this.handleOrgCreateJoinModalSubmit}
-            >
-              Create and Join
-            </Button>
-        </Modal.Footer>
-      </Modal>
-    )
-  }
-
-  renderLeaveOrgModal = () => {
-    return (
-      <Modal 
-        show={this.state.showLeaveModal} 
-        onHide={this.handleModalClose} 
-        aria-labelledby="LeaveOrgModal"
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Leave organisation?</Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body>
-          <p>Are you sure you want to leave your current organisation?</p>
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button bsStyle="success" onClick={this.handleModalClose}>
-            Cancel
-          </Button>
-            <Button
-              bsStyle="danger"
-              type="submit"
-              onClick={this.handleLeaveModalSubmit}
-            >
-              Leave
-            </Button>
-        </Modal.Footer>
-      </Modal>
-    )
-  }
-
-  renderListShifts() {
-    const shifts = this.props.shifts;
-
-    const options = {
-      defaultSortName: 'shiftDate',
-      defaultSortOrder: 'desc'
-    };
-
-    return (
-      <BootstrapTable data={ shifts } options={ options } version='4'>
-        <TableHeaderColumn 
-          dataField='id' 
-          isKey 
-          width='30' 
-          headerAlign='center'
-          dataAlign='center'
-        >#</TableHeaderColumn>
-        <TableHeaderColumn 
-          dataField='name'
-          width='150' 
-          headerAlign='center'
-          dataAlign='center'
-        >Employee Name</TableHeaderColumn>
-        <TableHeaderColumn 
-          dataField='shiftDate' 
-          headerAlign='center'
-          dataAlign='center'
-          >Shift Date</TableHeaderColumn>
-        <TableHeaderColumn 
-          dataField='startTime' 
-          headerAlign='center'
-          dataAlign='center'
-        >Start Time</TableHeaderColumn>
-        <TableHeaderColumn 
-          dataField='finishTime' 
-          headerAlign='center'
-          dataAlign='center'
-        >Finish Time</TableHeaderColumn>
-        <TableHeaderColumn 
-          dataField='breakLength' 
-          headerAlign='center'
-          dataAlign='center'
-        >Break Length(in minutes)</TableHeaderColumn>
-        <TableHeaderColumn 
-          dataField='hoursWorked' 
-          headerAlign='center'
-          dataAlign='center'
-        >Hours Worked</TableHeaderColumn>
-        <TableHeaderColumn 
-          dataField='shiftCost' 
-          headerAlign='center'
-          dataAlign='center'
-          dataFormat={ this.currencyFormatted }
-        >Shift Cost</TableHeaderColumn>
-      </BootstrapTable>
-    )
-  } 
-
-  renderListOrganisations() {
-    const organisations = this.props.organisations;
-
-    return (
-      <BootstrapTable data={ organisations } version='4'>
-        <TableHeaderColumn 
-          dataField='id' 
-          isKey 
-          width='30' 
-          headerAlign='center'
-          dataAlign='center'
-        >#</TableHeaderColumn>
-        <TableHeaderColumn dataField='name' headerAlign='center'>Organisation Name</TableHeaderColumn>
-        <TableHeaderColumn 
-          dataField='hourlyRate' 
-          width='150' 
-          headerAlign='center'
-          dataAlign='center'
-          dataFormat={ this.currencyFormatted }
-        >Hourly Rate</TableHeaderColumn>
-        <TableHeaderColumn 
-          dataField='id' 
-          width='220'
-          dataFormat={this.buttonFormatter}
-        ></TableHeaderColumn>
-      </BootstrapTable>
-    )
-  }
-
   renderMainPage() {
     return (
       <div>
@@ -529,15 +285,24 @@ export default class Home extends Component {
   }
 
   render() {
+    const modalProps ={
+      homeState: this.state,
+      validateOrgModalForm: this.validateOrgModalForm,
+      handleModalClose: this.handleModalClose,
+      handleChange: this.handleChange,
+      handleOrgUpdateModalSubmit: this.handleOrgUpdateModalSubmit,
+      handleOrgCreateJoinModalSubmit: this.handleOrgCreateJoinModalSubmit,
+      handleLeaveModalSubmit: this.handleLeaveModalSubmit
+    }
 
     return (
       <div className="Home">
         {this.props.isAuthenticated === false
           ? this.renderWelcomePage()
           : this.renderMainPage()}
-        {this.renderEditOrgModal()}
-        {this.renderCreateJoinOrgModal()}
-        {this.renderLeaveOrgModal()}
+        <RenderEditOrgModal childProps={modalProps}/>
+        <RenderCreateJoinOrgModal childProps={modalProps}/>
+        <RenderLeaveOrgModal childProps={modalProps}/>
       </div>
     );
   }
