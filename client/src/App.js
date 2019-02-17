@@ -178,6 +178,8 @@ class App extends Component {
     if (data.userHasAuthenticated && data.sessionId !== 'null' && data.sessionId !== 'undefined') {
       localStorage.setItem('sessionId', data.sessionId);
 
+      console.log(data)
+
       this.setState({ 
         isAuthenticated: data.userHasAuthenticated,
         sessionId: data.sessionId,
@@ -203,7 +205,8 @@ class App extends Component {
   handleLogout = async event => {
     const data = {
       userHasAuthenticated: false,
-      sessionId: undefined
+      sessionId: undefined,
+      email: ""
     }
 
     const headers = {

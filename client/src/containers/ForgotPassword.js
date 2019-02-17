@@ -37,15 +37,13 @@ export default class ForgotPassword extends Component {
     newPasswordConfirmation: this.state.confirmNewPassword
     };
 
-    console.log(resetPassword)
-
     const headers = {
       'Content-Type': 'application/json',
       'Authorization': this.state.sessionId
     }    
 
     try {
-      const resetResponse = await axios.put(`http://localhost:3000/users/me/reset_password`, resetPassword, {headers});
+      await axios.put(`http://localhost:3000/users/me/reset_password`, resetPassword, {headers});
       alert('Password Reset');
       this.props.history.push("/login");
     } catch (e) {
