@@ -114,7 +114,6 @@ class App extends Component {
     const userOrganisation = newOrgArray[orgId-1];
     const rawShifts = newRawShifts || this.state.rawShifts;
     const users = newUserList || this.state.users;
-    this.userHasChangedOrganisation(orgId)
     formatShiftRows(rawShifts, users, userOrganisation)
       .then(shifts => {
         this.setState({
@@ -124,6 +123,7 @@ class App extends Component {
           rawShifts,
           users
         });
+        this.userHasChangedOrganisation(orgId)
       })
   }
 

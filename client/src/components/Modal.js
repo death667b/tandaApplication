@@ -285,8 +285,12 @@ export class RenderNewShiftModal extends PureComponent {
 
     const { allUsers } = appProps;
 
-    const userOrganisation = appProps.organisations[appProps.organisationId-1] || {};
-    const orgUsers = allUsers.filter(user => user.organisationId === userOrganisation.id);
+    let userOrganisation = {};
+    let orgUsers = {};
+    if (homeState.showNewShiftModal) {
+      userOrganisation = appProps.organisations[appProps.organisationId-1] || {};
+      orgUsers = allUsers.filter(user => user.organisationId === userOrganisation.id);
+    }
 
     const curriedhandleDropdownOptionChange = (eventKey, event)  => {
       handleDropdownOptionChange(orgUsers[eventKey]);
@@ -398,8 +402,12 @@ export class RenderEditShiftModal extends PureComponent {
 
     const { allUsers } = appProps;
 
-    const userOrganisation = appProps.organisations[appProps.organisationId-1] || {};
-    const orgUsers = allUsers.filter(user => user.organisationId === userOrganisation.id);
+    let userOrganisation = {};
+    let orgUsers = {};
+    if (homeState.showEditShiftModal) {
+      userOrganisation = appProps.organisations[appProps.organisationId-1] || {};
+      orgUsers = allUsers.filter(user => user.organisationId === userOrganisation.id);
+    }
 
     const curriedhandleDropdownOptionChange = (eventKey, event)  => {
       handleDropdownOptionChange(orgUsers[eventKey]);

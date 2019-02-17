@@ -55,6 +55,7 @@ export default class Signup extends Component {
       }
       const orgListRespoonse = await axios.get(`http://localhost:3000/organisations`, {headers});
       const userInfoResponse = await axios.get(`http://localhost:3000/users/me`, {headers});
+      const allUsersResponse = await axios.get(`http://localhost:3000/users/all`, {headers});
 
       const data = {
         userHasAuthenticated: true,
@@ -63,6 +64,7 @@ export default class Signup extends Component {
         rawShifts: [],
         userId: userInfoResponse.data.id,
         users: [],
+        allUsers: allUsersResponse.data,
         name: userInfoResponse.data.name,
         email: userInfoResponse.data.email,
         organisationId: userInfoResponse.data.organisationId,
