@@ -28,6 +28,7 @@ class App extends Component {
       rawShifts: [],
       userId: null,
       users: [],
+      allUsers: [],
       sessionId: sessionId,
       show: false,
       name: "",
@@ -67,6 +68,24 @@ class App extends Component {
     });
   }
 
+  addNewShift = async newShift => {
+    const shiftsCopy = JSON.parse(JSON.stringify(this.state.rawShifts))
+    shiftsCopy.push(newShift)
+    
+    const userOrganisation = this.state.organisations[this.state.organisationId-1];
+    const users = this.state.users;
+
+    formatShiftRows(shiftsCopy, users, userOrganisation)
+      .then(shifts => {
+        this.setState({
+          shifts,
+          rawShifts: shiftsCopy
+        });
+      }).catch(e => {
+        console.log(e);
+      })
+  }
+
   updateOrganisationAndUserId = async (orgId, newOrgArray, newRawShifts, newUserList) => {
     const userOrganisation = newOrgArray[orgId-1];
     const rawShifts = newRawShifts || this.state.rawShifts;
@@ -93,8 +112,9 @@ class App extends Component {
         sessionId: data.sessionId,
         shifts: data.shifts,
         rawShifts: data.rawShifts,
-        userId: data.id,
+        userId: data.userId,
         users: data.users,
+        allUsers: data.allUsers,
         name: data.name,
         email: data.email,
         organisationId: data.organisationId,
@@ -222,6 +242,9 @@ render() {
   const childProps = {
     isAuthenticated: this.state.isAuthenticated,
     sessionId: this.state.sessionId,
+    users: this.state.users,
+    allUsers: this.state.allUsers,
+    addNewShift: this.addNewShift,
     userHasAuthenticated: this.userHasAuthenticated,
     userHasChangedOrganisation: this.userHasChangedOrganisation,
     updateOrganisationAndUserId: this.updateOrganisationAndUserId,

@@ -12,7 +12,7 @@ export default class Signup extends Component {
       email: "",
       password: "",
       confirmPassword: "",
-      savePasswordChecked: false
+      savePasswordChecked: true
     };
   }
 

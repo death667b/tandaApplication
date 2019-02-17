@@ -6,7 +6,7 @@ const formatShiftRows = async (rawShiftData, userData, userOrg) => {
     const name = userData.filter(user => user.id === shift.userId)[0].name;
     const startDateObj = new Date(shift.start);
     const finsihDateObj = new Date(shift.finish);
-    const shiftDate = startDateObj.getDate() + '/' + startDateObj.getMonth() + '/' + startDateObj.getFullYear();
+    const shiftDate = startDateObj.getDate() + '/' + (startDateObj.getMonth()+1) + '/' + startDateObj.getFullYear();
     const startTime = startDateObj.getHours() + ':' + startDateObj.getMinutes();
     const finishTime = finsihDateObj.getHours() + ':' + finsihDateObj.getMinutes();
     const breakLength = shift.breakLength;

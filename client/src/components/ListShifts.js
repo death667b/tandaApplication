@@ -15,28 +15,30 @@ const ListShifts = parentProps => {
       <TableHeaderColumn 
         dataField='id' 
         isKey 
-        width='30' 
+        width='35' 
         headerAlign='center'
         dataAlign='center'
       >#</TableHeaderColumn>
       <TableHeaderColumn 
         dataField='name'
-        width='150' 
         headerAlign='center'
         dataAlign='center'
       >Employee Name</TableHeaderColumn>
       <TableHeaderColumn 
         dataField='shiftDate' 
+        width='110'
         headerAlign='center'
         dataAlign='center'
         >Shift Date</TableHeaderColumn>
       <TableHeaderColumn 
         dataField='startTime' 
+        width='110'
         headerAlign='center'
         dataAlign='center'
       >Start Time</TableHeaderColumn>
       <TableHeaderColumn 
         dataField='finishTime' 
+        width='110'
         headerAlign='center'
         dataAlign='center'
       >Finish Time</TableHeaderColumn>
@@ -44,14 +46,17 @@ const ListShifts = parentProps => {
         dataField='breakLength' 
         headerAlign='center'
         dataAlign='center'
-      >Break Length(in minutes)</TableHeaderColumn>
+        width='140'
+      >Break Length</TableHeaderColumn>
       <TableHeaderColumn 
         dataField='hoursWorked' 
         headerAlign='center'
+        width='140'
         dataAlign='center'
       >Hours Worked</TableHeaderColumn>
       <TableHeaderColumn 
         dataField='shiftCost' 
+        width='140'
         headerAlign='center'
         dataAlign='center'
         dataFormat={ currencyFormatted }

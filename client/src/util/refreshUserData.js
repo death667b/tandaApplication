@@ -11,6 +11,7 @@ const refreshUserData = async sessionId => {
     }
     const orgListRespoonse = await axios.get(`http://localhost:3000/organisations`, {headers});
     const userInfoResponse = await axios.get(`http://localhost:3000/users/me`, {headers});
+    const allUsersResponse = await axios.get(`http://localhost:3000/users/all`, {headers});
     let shiftRes = {data: []};
     if (userInfoResponse.data.organisationId) {
       userListResponse = await axios.get(`http://localhost:3000/users`, {headers});
@@ -29,6 +30,7 @@ const refreshUserData = async sessionId => {
       rawShifts: shiftRes.data,
       userId: userInfoResponse.data.id,
       users: userListResponse.data,
+      allUsers: allUsersResponse.data,
       name: userInfoResponse.data.name,
       email: userInfoResponse.data.email,
       organisationId: userInfoResponse.data.organisationId,

@@ -1,16 +1,17 @@
 import React, { Component } from "react";
 import { Button, ButtonToolbar } from 'react-bootstrap'
 import axios from 'axios';
-
 import { 
   RenderEditOrgModal, 
   RenderCreateJoinOrgModal, 
-  RenderLeaveOrgModal } from '../components/Modal.js';
+  RenderLeaveOrgModal,
+  RenderNewShiftModal } from '../components/Modal.js';
 import ListOrganisations from '../components/ListOrganisations.js';
 import ListShifts from '../components/ListShifts.js';
 import currencyFormatted from '../util/currencyFormatted.js';
 import cleanHourlyRate from '../util/cleanHourlyRate.js';
-
+import calcHoursWorked from '../util/calcHoursWorked.js';
+import formatTime from '../util/formatTime.js';
 import "./Home.css";
 
 export default class Home extends Component {
@@ -21,10 +22,18 @@ export default class Home extends Component {
       showEditModal: false,
       showCreateJoinModal: false,
       showLeaveModal: false,
+      showNewShiftModal: false,
       newName: '',
       newHourlyRate: '',
       orgId: '',
-      orgName: ''
+      orgName: '',
+      breakTime: 0,
+      hoursWorked: 0,
+      shiftCost: 0,
+      selectedOption: null,
+      selectedOptionId: null,
+      startDate: new Date(),
+      finishDate: new Date(),
     };
   }
 
@@ -33,6 +42,29 @@ export default class Home extends Component {
       this.state.newName.length > 0 &&
       cleanHourlyRate(this.state.newHourlyRate)
     );
+  }
+
+  validateNewShiftModalForm = () => {
+    const { startDate, finishDate, breakTime } = this.state;
+    let hourlyRate;
+    if (this.state.showNewShiftModal && this.props.organisations.length > 0) {
+      hourlyRate = this.props.organisations[this.props.organisationId-1].hourlyRate
+    } else {
+      hourlyRate = 0;
+    }
+    const { hoursWorked } = calcHoursWorked(startDate, finishDate, breakTime, hourlyRate);
+
+    return (
+      breakTime >= 0 &&
+      hoursWorked > 0
+    );
+  }
+
+  handleDropdownOptionChange = (user) => {
+    this.setState({ 
+      selectedOption: user.name,
+      selectedOptionId: user.id
+    });
   }
 
   HandleJoinSubmit = async orgId => {
@@ -62,6 +94,7 @@ export default class Home extends Component {
       showEditModal: false,
       showCreateJoinModal: false,
       showLeaveModal: false,
+      showNewShiftModal: false,
       newName: '',
       newHourlyRate: '',
     });
@@ -78,6 +111,44 @@ export default class Home extends Component {
       newHourlyRate: hourlyRate
     });
   }
+  
+  handleStartDataChange = startDate => {
+    const { finishDate, breakTime } = this.state;
+    const hourlyRate = this.props.organisations[this.props.organisationId-1].hourlyRate;
+    const { hoursWorked, shiftCost } = calcHoursWorked(startDate, finishDate, breakTime, hourlyRate);
+
+      this.setState({ 
+        startDate,
+        hoursWorked,
+        shiftCost
+      });
+  }
+
+  handleFinishDataChange = finishDate => {
+    const { startDate, breakTime } = this.state;
+    const hourlyRate = this.props.organisations[this.props.organisationId-1].hourlyRate;
+    const { hoursWorked, shiftCost } = calcHoursWorked(startDate, finishDate, breakTime, hourlyRate);
+
+      this.setState({ 
+        finishDate,
+        hoursWorked,
+        shiftCost
+      });
+  }
+
+  handleBreakTimeChange = dirtyBreakTime => {
+    let breakTime = parseInt(dirtyBreakTime.target.value);
+    breakTime = (isNaN(breakTime) || breakTime < 0) ? 0 : breakTime;
+    const hourlyRate = this.props.organisations[this.props.organisationId-1].hourlyRate;
+    const { startDate, finishDate } = this.state;
+    const { hoursWorked, shiftCost } = calcHoursWorked(startDate, finishDate, breakTime, hourlyRate);
+
+      this.setState({ 
+        hoursWorked,
+        shiftCost,
+        breakTime
+      });
+  }
 
   handleCreateJoinModalShow = () => {
     this.setState({ 
@@ -90,6 +161,19 @@ export default class Home extends Component {
   handleLeaveModalShow = () => {
     this.setState({ 
       showLeaveModal: true
+    });
+  }
+
+  handleNewShiftModalShow = () => {
+    let currentUser = '';
+    (this.props.allUsers.length > 0) && (currentUser = this.props.allUsers[this.props.userId-1]);
+
+    this.setState({ 
+      showNewShiftModal: true,
+      selectedOption: currentUser.name,
+      selectedOptionId: currentUser.id,
+      startDate: new Date(),
+      finishDate: new Date(),
     });
   }
 
@@ -139,6 +223,38 @@ export default class Home extends Component {
     }
   }
 
+  handleAddNewShiftModalSubmit = async event => {
+    event.preventDefault();
+
+    const newShift = {
+      userId: this.state.selectedOptionId,
+      start: formatTime(this.state.startDate),
+      finish: formatTime(this.state.finishDate),
+      breakLength: this.state.breakTime
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': this.props.sessionId
+    }
+
+    try {
+      const shiftRes = await axios.post(`http://localhost:3000/shifts`, newShift, {headers})
+  
+      this.setState({
+        showNewShiftModal: false,
+        breakTime: 0,
+        hoursWorked: 0,
+        shiftCost: 0,
+      });
+
+      this.props.addNewShift(shiftRes.data);
+    } catch (e) {
+      console.log(e)
+      alert(e.response.data.error);
+    }
+  }
+
   handleOrgCreateJoinModalSubmit = async event => {
     event.preventDefault();
 
@@ -166,7 +282,6 @@ export default class Home extends Component {
 
       this.props.updateOrganisationAndUserId(joinRes.data.id, orgListRespoonse.data)
     } catch (e) {
-      console.log(e)
       alert(e.response.data.error);
     }
   }
@@ -262,6 +377,15 @@ export default class Home extends Component {
 
               {/* Display shifts section */}
               <h3>Shifts at {userOrganisation.name}</h3>
+              <ButtonToolbar> 
+                <Button 
+                  bsStyle="primary" 
+                  className='leaveButton' 
+                  onClick={this.handleNewShiftModalShow}
+                >
+                  Add new shift
+                </Button>
+              </ButtonToolbar> 
               <ListShifts shifts={this.props.shifts}/>
             </div>
           )}
@@ -287,12 +411,19 @@ export default class Home extends Component {
   render() {
     const modalProps ={
       homeState: this.state,
+      appProps: this.props,
       validateOrgModalForm: this.validateOrgModalForm,
+      validateNewShiftModalForm: this.validateNewShiftModalForm,
       handleModalClose: this.handleModalClose,
       handleChange: this.handleChange,
+      handleBreakTimeChange: this.handleBreakTimeChange,
+      handleStartDataChange: this.handleStartDataChange,
+      handleFinishDataChange: this.handleFinishDataChange,
       handleOrgUpdateModalSubmit: this.handleOrgUpdateModalSubmit,
       handleOrgCreateJoinModalSubmit: this.handleOrgCreateJoinModalSubmit,
-      handleLeaveModalSubmit: this.handleLeaveModalSubmit
+      handleLeaveModalSubmit: this.handleLeaveModalSubmit,
+      handleAddNewShiftModalSubmit: this.handleAddNewShiftModalSubmit,
+      handleDropdownOptionChange: this.handleDropdownOptionChange,
     }
 
     return (
@@ -303,6 +434,7 @@ export default class Home extends Component {
         <RenderEditOrgModal childProps={modalProps}/>
         <RenderCreateJoinOrgModal childProps={modalProps}/>
         <RenderLeaveOrgModal childProps={modalProps}/>
+        <RenderNewShiftModal childProps={modalProps}/>
       </div>
     );
   }

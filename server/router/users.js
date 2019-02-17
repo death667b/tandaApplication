@@ -26,6 +26,21 @@ router.get("/", (req, res) => {
   );
 });
 
+router.get("/all", (req, res) => {
+  DB.all(
+    "SELECT * FROM users"
+  ).then(users =>
+    res.json(
+      users.map(user => ({
+        id: user.id,
+        organisationId: user.organisation_id,
+        name: user.name,
+        email: user.email
+      }))
+    )
+  );
+});
+
 router.get("/me", (req, res) =>
   res.json({
     id: req.user.id,
