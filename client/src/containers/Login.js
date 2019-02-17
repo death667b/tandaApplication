@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { Link } from "react-router-dom";
 import axios from 'axios';
 import { Button, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
 import "./Login.css";
@@ -92,6 +93,7 @@ export default class Login extends Component {
               type="password"
             />
           </FormGroup>
+          <p className="small"><Link to="/forgotpassword">Reset Pasword</Link></p>
           <Button
             block
             bsSize="large"

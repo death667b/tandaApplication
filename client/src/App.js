@@ -1,9 +1,10 @@
-import React, { Component, Fragment } from "react";
-import { Link, withRouter } from "react-router-dom";
-import { Nav, Navbar, NavItem, Button, Modal, FormGroup, FormControl, ControlLabel } from "react-bootstrap";
-import { LinkContainer } from "react-router-bootstrap";
+import React, { Component } from "react";
+import { withRouter } from "react-router-dom";
 import Routes from "./Routes";
 import axios from 'axios';
+import TopNavBar from './components/TopNavBar.js';
+import { RenderEditUserModal } from './components/Modal.js';
+
 import "./App.css";
 
 class App extends Component {
@@ -27,6 +28,8 @@ class App extends Component {
       users: [],
       sessionId: sessionId,
       show: false,
+      name: "",
+      email: "",
       newEmail: "",
       newName: "",
       oldPassword: "",
@@ -220,10 +223,6 @@ class App extends Component {
   }
 
   handleModalClose = () => {
-    this.setState({ show: false });
-  }
-
-  handleModalCancel = () => {
     this.setState({ 
       show: false,      
       newPassword: "",
@@ -237,14 +236,14 @@ class App extends Component {
     this.setState({ show: true });
   }
 
-  validateModalRenameForm() {
+  validateModalRenameForm = () => {
     return (
       this.state.newEmail.length > 0 ||
       this.state.newName.length > 0
     );
   }
 
-  validateModelPasswordForm() {
+  validateModelPasswordForm = () => {
     return (
       this.state.oldPassword.length > 0 &&
       this.state.newPassword.length > 0 &&
@@ -308,89 +307,6 @@ class App extends Component {
     }
   }
 
- renderModal = () => {
-  return (
-    <Modal show={this.state.show} onHide={this.handleModalClose}>
-      <Modal.Header closeButton>
-        <Modal.Title>Editing Details for {this.state.name}</Modal.Title>
-      </Modal.Header>
-
-      <Modal.Body>
-        <form onSubmit={this.handleModalRenameSubmit}>
-          <FormGroup controlId="newName" bsSize="large">
-            <ControlLabel>Name</ControlLabel>
-            <FormControl
-              autoFocus
-              type="name"
-              value={this.state.newName || this.state.name}
-              onChange={this.handleChange}
-            />
-          </FormGroup>
-          <FormGroup controlId="newEmail" bsSize="large">
-            <ControlLabel>Email</ControlLabel>
-            <FormControl
-              autoFocus
-              type="email"
-              value={this.state.newEmail || this.state.email}
-              onChange={this.handleChange}
-            />
-          </FormGroup>
-          <Button
-            block
-            bsStyle="success"
-            bsSize="large"
-            disabled={!this.validateModalRenameForm()}
-            type="submit"
-          >
-            Save new details
-          </Button>
-        </form>
-        <form onSubmit={this.handleModalPasswordSubmit}>
-          <FormGroup controlId="oldPassword" bsSize="large">
-            <ControlLabel>Old Password</ControlLabel>
-            <FormControl
-              value={this.state.oldPassword}
-              onChange={this.handleChange}
-              type="password"
-            />
-          </FormGroup>
-          <FormGroup controlId="newPassword" bsSize="large">
-            <ControlLabel>New Password</ControlLabel>
-            <FormControl
-              value={this.state.newPassword}
-              onChange={this.handleChange}
-              type="password"
-            />
-          </FormGroup>
-          <FormGroup controlId="newConfirmPassword" bsSize="large">
-            <ControlLabel>Confirm New Password</ControlLabel>
-            <FormControl
-              value={this.state.newConfirmPassword}
-              onChange={this.handleChange}
-              type="password"
-            />
-          </FormGroup>
-          <Button
-            block
-            bsStyle="success"
-            bsSize="large"
-            disabled={!this.validateModelPasswordForm()}
-            type="submit"
-          >
-            Save new password
-          </Button>
-        </form>
-      </Modal.Body>
-
-      <Modal.Footer>
-        <Button bsStyle="danger" onClick={this.handleModalCancel}>
-          Cancel
-        </Button>
-      </Modal.Footer>
-    </Modal>
-  )
- }
-
 render() {
   const childProps = {
     isAuthenticated: this.state.isAuthenticated,
@@ -409,38 +325,35 @@ render() {
     shifts: this.state.shifts
   };
 
+  const narBarProps = {
+    handleModalShow: this.handleModalShow,
+    handleLogout: this.handleLogout,
+    isAuthenticated: this.state.isAuthenticated
+  }
+
+  const modalProps = {
+    show: this.state.show,
+    name: this.state.name,
+    newName: this.state.newName,
+    email: this.state.email,
+    newEmail: this.state.newEmail,
+    oldPassword: this.state.oldPassword,
+    newPassword: this.state.newPassword,
+    newConfirmPassword: this.state.newConfirmPassword,
+    handleChange: this.handleChange,
+    handleModalClose: this.handleModalClose,
+    handleModalRenameSubmit: this.handleModalRenameSubmit,
+    handleModalPasswordSubmit: this.handleModalPasswordSubmit,
+    validateModalRenameForm: this.validateModalRenameForm,
+    validateModelPasswordForm: this.validateModelPasswordForm,
+  }
+
   return (
     <div className="App container">
-      <Navbar fluid collapseOnSelect>
-        <Navbar.Header>
-          <Navbar.Brand>
-            <Link to="/">Adnat</Link>
-          </Navbar.Brand>
-          <Navbar.Toggle />
-        </Navbar.Header>
-        <Navbar.Collapse>
-          <Nav pullRight>
-            {this.state.isAuthenticated
-              ? <Fragment>
-                  <NavItem onClick={this.handleModalShow}>Edit Profile</NavItem>
-                  <NavItem onClick={this.handleLogout}>Logout</NavItem>
-                </Fragment>
-              : <Fragment>
-                  <LinkContainer to="/signup">
-                    <NavItem>Signup</NavItem>
-                  </LinkContainer>
-                  <LinkContainer to="/login">
-                    <NavItem>Login</NavItem>
-                  </LinkContainer>
-                </Fragment>
-            }
-          </Nav>
-        </Navbar.Collapse>
-      </Navbar>
-      
+      <TopNavBar props={narBarProps}/>
       <Routes childProps={childProps} />
 
-      {this.renderModal()}
+      <RenderEditUserModal props={modalProps}/>
     </div>
   );
 }

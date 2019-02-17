@@ -162,3 +162,107 @@ export class RenderLeaveOrgModal extends PureComponent {
     )
   }
 }
+
+export class RenderEditUserModal extends PureComponent {
+  render() {
+    const {
+      show,
+      name,
+      newName,
+      email,
+      newEmail,
+      oldPassword,
+      newPassword,
+      newConfirmPassword,
+      handleChange,
+      handleModalClose,
+      handleModalRenameSubmit,
+      handleModalPasswordSubmit,
+      validateModalRenameForm,
+      validateModelPasswordForm,
+    } = this.props.props;  
+
+
+
+    return (
+      <Modal show={show} onHide={handleModalClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Editing Details for {name}</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          <form onSubmit={handleModalRenameSubmit}>
+            <FormGroup controlId="newName" bsSize="large">
+              <ControlLabel>Name</ControlLabel>
+              <FormControl
+                autoFocus
+                type="name"
+                value={newName || name}
+                onChange={handleChange}
+              />
+            </FormGroup>
+            <FormGroup controlId="newEmail" bsSize="large">
+              <ControlLabel>Email</ControlLabel>
+              <FormControl
+                autoFocus
+                type="email"
+                value={newEmail || email}
+                onChange={handleChange}
+              />
+            </FormGroup>
+            <Button
+              block
+              bsStyle="success"
+              bsSize="large"
+              disabled={!validateModalRenameForm()}
+              type="submit"
+            >
+              Save new details
+            </Button>
+          </form>
+          <form onSubmit={handleModalPasswordSubmit}>
+            <FormGroup controlId="oldPassword" bsSize="large">
+              <ControlLabel>Old Password</ControlLabel>
+              <FormControl
+                value={oldPassword}
+                onChange={handleChange}
+                type="password"
+              />
+            </FormGroup>
+            <FormGroup controlId="newPassword" bsSize="large">
+              <ControlLabel>New Password</ControlLabel>
+              <FormControl
+                value={newPassword}
+                onChange={handleChange}
+                type="password"
+              />
+            </FormGroup>
+            <FormGroup controlId="newConfirmPassword" bsSize="large">
+              <ControlLabel>Confirm New Password</ControlLabel>
+              <FormControl
+                value={newConfirmPassword}
+                onChange={handleChange}
+                type="password"
+              />
+            </FormGroup>
+            <Button
+              block
+              bsStyle="success"
+              bsSize="large"
+              disabled={!validateModelPasswordForm()}
+              type="submit"
+            >
+              Save new password
+            </Button>
+          </form>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button bsStyle="danger" onClick={handleModalClose}>
+            Cancel
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    )
+  }
+}
